@@ -45,6 +45,7 @@ function getContacts (config, callback) {
   request(options, (err, res, body) => {
     if (err) {
       callback(err)
+      return
     }
 
     let orchestrations = [buildOrchestration(before, res, body)]
@@ -76,7 +77,7 @@ function convertContactToCSD (contact) {
  * @param {Function} callback (err, contacts, orchestrations)
  */
 function getContactsAsCSDEntities (config, callback) {
-  getContacts((err, contacts, orchestrations) => {
+  getContacts(config, (err, contacts, orchestrations) => {
     if (err) {
       callback(err)
     } else {
