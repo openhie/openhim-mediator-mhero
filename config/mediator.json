@@ -1,6 +1,6 @@
 {
   "urn": "urn:uuid:7078b8b7-16b9-48cd-b8ad-38be64733d73",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "name": "mHero sync",
   "description": "This mediator synchronises data between the mHero systems",
   "defaultChannelConfig": [],
@@ -32,12 +32,40 @@
           "type": "number"
         }
       ]
+    }, {
+      "param": "rapidpro",
+      "displayName": "RapidPro Server",
+      "description": "The RapidPro server to sync contacts with",
+      "type": "struct",
+      "template": [
+        {
+          "param": "url",
+          "displayName": "URL",
+          "description": "The base URL (e.g. https://rapidpro.io)",
+          "type": "string"
+        },
+        {
+          "param": "authtoken",
+          "displayName": "Authentication Token",
+          "type": "string"
+        },
+        {
+          "param": "groupname",
+          "displayName": "Group Name",
+          "type": "string"
+        }
+      ]
     }
   ],
   "config": {
     "upstream": {
       "port":9999,
       "host":"localhost"
+    },
+    "rapidpro": {
+      "url": "https://rapidpro.io",
+      "authtoken": "",
+      "groupname": ""
     }
   }
 }

@@ -27,7 +27,8 @@
   },
   "homepage": "https://github.com/jembi/openhim-mediator-mhero#readme",
   "dependencies": {
-    "openhim-mediator-utils": "^0.2.2"
+    "openhim-mediator-utils": "^0.2.2",
+    "request": "^2.71.0"
   },
   "devDependencies": {
     "onchange": "^2.3.0",
