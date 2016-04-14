@@ -8,16 +8,8 @@ const index = rewire('../index.js')
 const rapidpro = rewire('../rapidpro.js')
 
 // don't log during tests - comment these out for debugging
-// console.log = () => {}
+console.log = () => {}
 console.error = () => {}
-
-tap.test('some unit test', (t) => {
-  index.__get__('setupServer') // fetch some non-exported function that you need
-  const actual = 1
-  const expected = 1
-  t.equal(actual, expected, 'actual should equal the expected')
-  t.end()
-})
 
 tap.test('rapidpro.contactsURL should build up the url from a base url', (t) => {
   let contactsURL = rapidpro.__get__('contactsURL')
