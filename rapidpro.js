@@ -1,27 +1,12 @@
 'use strict'
 const request = require('request')
+const utils = require('./utils')
 
 function contactsURL (baseURL) {
   if (baseURL.slice(-1) === '/') {
     baseURL = baseURL.slice(0, -1)
   }
   return `${baseURL}/api/v1/contacts.json`
-}
-
-function buildOrchestration (beforeTimestamp, res, body) {
-  return {
-    name: 'RapidPro Fetch Contacts',
-    request: {
-      method: 'GET',
-      timestamp: beforeTimestamp
-    },
-    response: {
-      status: res.statusCode,
-      headers: res.headers,
-      body: body,
-      timestamp: new Date()
-    }
-  }
 }
 
 /**
@@ -48,7 +33,7 @@ function getContacts (config, callback) {
       return
     }
 
-    let orchestrations = [buildOrchestration(before, res, body)]
+    let orchestrations = [utils.buildOrchestration('RapidPro Fetch Contacts', before, res, body)]
 
     if (res.statusCode !== 200) {
       callback(`RapidPro responded with status ${res.statusCode}`, null, orchestrations)

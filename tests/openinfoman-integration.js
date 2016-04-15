@@ -16,7 +16,7 @@ const openinfoman = Openinfoman({
   host: 'localhost'
 })
 
-tap.test('openinfoman module', (t) => {
+tap.test('openinfoman.fetchAllEntities should fetch all entries', (t) => {
   csdServer.start(() => {
     openinfoman.fetchAllEntities((err, result) => {
       if (err) {
@@ -27,6 +27,30 @@ tap.test('openinfoman module', (t) => {
       const select = xpath.useNamespaces({'csd': 'urn:ihe:iti:csd:2013'})
       const count = select('count(//csd:CSD/csd:providerDirectory/csd:provider)', doc)
       t.equal(count, 2, 'two provider should exist in the result')
+      csdServer.stop(() => {
+        t.end()
+      })
+    })
+  })
+})
+
+tap.test('openinfoman.fetchAllEntities should error if the CSD server couldn\'t be contacted', (t) => {
+  openinfoman.fetchAllEntities((err, result) => {
+    t.ok(err, 'error should be set')
+    t.end()
+  })
+})
+
+tap.test('openinfoman.fetchAllEntities should add return a single orchestration', (t) => {
+  csdServer.start(() => {
+    openinfoman.fetchAllEntities((err, result, orchestrations) => {
+      t.error(err, 'should not error')
+      t.ok(orchestrations, 'orchestrations should be set')
+      t.equals(orchestrations.length, 1, 'there should only be one orchestration')
+      t.equals(orchestrations[0].name, 'OpenInfoMan fetch all entities')
+      t.ok(orchestrations[0].request)
+      t.ok(orchestrations[0].response)
+      t.equal(200, orchestrations[0].response.status, 'response status should be captured correctly')
       csdServer.stop(() => {
         t.end()
       })
