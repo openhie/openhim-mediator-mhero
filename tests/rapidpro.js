@@ -4,7 +4,6 @@ const http = require('http')
 const tap = require('tap')
 const rewire = require('rewire')
 
-const index = rewire('../index.js')
 const rapidpro = rewire('../rapidpro.js')
 
 // don't log during tests - comment these out for debugging

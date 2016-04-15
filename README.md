@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/jembi/openhim-mediator-mhero.svg?branch=master)](https://travis-ci.org/jembi/openhim-mediator-mhero) [![codecov.io](https://codecov.io/github/jembi/openhim-mediator-mhero/coverage.svg?branch=master)](https://codecov.io/github/jembi/openhim-mediator-mhero?branch=master)
+
 mHero Mediator
 ==============
 
