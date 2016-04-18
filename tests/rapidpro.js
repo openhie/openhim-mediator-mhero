@@ -1,10 +1,10 @@
 'use strict'
 
-const http = require('http')
 const tap = require('tap')
 const rewire = require('rewire')
 const xpath = require('xpath')
 const Dom = require('xmldom').DOMParser
+const testServer = require('./test-rapidpro-server')
 
 const rapidpro = rewire('../rapidpro.js')
 
@@ -27,162 +27,6 @@ const mediatorConf_withGroup = {
     authtoken: '1234secret',
     groupname: 'group-1'
   }
-}
-
-const testRapidProResponse = {
-  count: 2,
-  next: null,
-  previous: null,
-  results: [
-    {
-      uuid: '86fe9d78-8c44-4815-ace7-5b4e0f5eadfb',
-      name: 'One Contact',
-      language: null,
-      group_uuids: ['036204f3-7967-44b5-964e-c64b961e7285'],
-      urns: [ 'tel:27731234567' ],
-      fields: {
-        globalid: 'test-1'
-      },
-      blocked: false,
-      failed: false,
-      modified_on: '2016-03-17T15:16:52.215Z',
-      phone: '',
-      groups: []
-    },
-    {
-      uuid: 'b1bddaa4-7461-4613-b35e-14a2eba7712d',
-      name: 'Two Contact',
-      language: null,
-      group_uuids: ['036204f3-7967-44b5-964e-c64b961e7285'],
-      urns: [ 'tel:27833450987' ],
-      fields: {
-        globalid: 'test-2'
-      },
-      blocked: false,
-      failed: false,
-      modified_on: '2016-03-17T14:07:50.623Z',
-      phone: '',
-      groups: []
-    }
-  ]
-}
-
-const testRapidProResponse_noGlobalId = {
-  count: 2,
-  next: null,
-  previous: null,
-  results: [
-    {
-      uuid: '86fe9d78-8c44-4815-ace7-5b4e0f5eadfb',
-      name: 'One Contact',
-      language: null,
-      group_uuids: ['036204f3-7967-44b5-964e-c64b961e7285'],
-      urns: [ 'tel:27731234567' ],
-      fields: {
-        globalid: 'test-1'
-      },
-      blocked: false,
-      failed: false,
-      modified_on: '2016-03-17T15:16:52.215Z',
-      phone: '',
-      groups: []
-    },
-    {
-      uuid: 'b1bddaa4-7461-4613-b35e-14a2eba7712d',
-      name: 'Two Contact',
-      language: null,
-      group_uuids: ['036204f3-7967-44b5-964e-c64b961e7285'],
-      urns: [ 'tel:27833450987' ],
-      fields: {
-      },
-      blocked: false,
-      failed: false,
-      modified_on: '2016-03-17T14:07:50.623Z',
-      phone: '',
-      groups: []
-    }
-  ]
-}
-
-// first and third entries share the same globalid
-const testRapidProResponse_multi = {
-  count: 3,
-  next: null,
-  previous: null,
-  results: [
-    {
-      uuid: '86fe9d78-8c44-4815-ace7-5b4e0f5eadfb',
-      name: 'One Contact',
-      language: null,
-      group_uuids: ['036204f3-7967-44b5-964e-c64b961e7285'],
-      urns: [ 'tel:27731234567' ],
-      fields: {
-        globalid: 'test-1'
-      },
-      blocked: false,
-      failed: false,
-      modified_on: '2016-03-17T15:16:52.215Z',
-      phone: '',
-      groups: []
-    },
-    {
-      uuid: 'b1bddaa4-7461-4613-b35e-14a2eba7712d',
-      name: 'Two Contact',
-      language: null,
-      group_uuids: ['036204f3-7967-44b5-964e-c64b961e7285'],
-      urns: [ 'tel:27833450987' ],
-      fields: {
-        globalid: 'test-2'
-      },
-      blocked: false,
-      failed: false,
-      modified_on: '2016-03-17T14:07:50.623Z',
-      phone: '',
-      groups: []
-    },
-    {
-      uuid: 'f3873a12-9e3d-485f-8d30-99fd221fc437',
-      name: 'Contact One',
-      language: null,
-      group_uuids: ['036204f3-7967-44b5-964e-c64b961e7285'],
-      urns: [ 'tel:27732345678' ],
-      fields: {
-        globalid: 'test-1'
-      },
-      blocked: false,
-      failed: false,
-      modified_on: '2016-03-17T15:16:52.215Z',
-      phone: '',
-      groups: []
-    }
-  ]
-}
-
-const testRapidProResponse_groupSearch = {
-  count: 1,
-  next: null,
-  previous: null,
-  results: [
-    {
-      uuid: '036204f3-7967-44b5-964e-c64b961e7285',
-      name: 'group-1'
-    }
-  ]
-}
-
-const testRapidProResponse_noResults = {
-  count: 0,
-  next: null,
-  previous: null,
-  results: [
-  ]
-}
-
-function mockRapidPro (port, response, callback) {
-  let server = http.createServer((req, res) => {
-    res.end(JSON.stringify(response))
-  })
-  server.listen(port, () => callback(server))
 }
 
 tap.test('rapidpro.contactsURL should build up the url from a base url', (t) => {
@@ -210,7 +54,7 @@ tap.test('rapidpro.groupsURL should build up the url from a base url', (t) => {
 })
 
 tap.test('rapidpro.getContacts should fetch contacts', (t) => {
-  mockRapidPro(6700, testRapidProResponse, (server) => {
+  testServer.start(6700, testServer.testResponses.testRapidProResponse, (server) => {
     let getContacts = rapidpro.__get__('getContacts')
     getContacts(mediatorConf, null, (err, contacts, orchestrations) => {
       t.error(err)
@@ -228,8 +72,16 @@ tap.test('rapidpro.getContacts should fetch contacts', (t) => {
   })
 })
 
+tap.test('rapidpro.getContacts should respond with an error if server unavailable', (t) => {
+  let getContacts = rapidpro.__get__('getContacts')
+  getContacts(mediatorConf, null, (err, contacts, orchestrations) => {
+    t.ok(err)
+    t.end()
+  })
+})
+
 tap.test('rapidpro.getContacts should add orchestrations', (t) => {
-  mockRapidPro(6700, testRapidProResponse, (server) => {
+  testServer.start(6700, testServer.testResponses.testRapidProResponse, (server) => {
     let getContacts = rapidpro.__get__('getContacts')
     getContacts(mediatorConf, null, (err, contacts, orchestrations) => {
       t.error(err)
@@ -250,7 +102,7 @@ tap.test('rapidpro.getContacts should add orchestrations', (t) => {
 })
 
 tap.test('rapidpro.getGroupUUID should fetch a group', (t) => {
-  mockRapidPro(6700, testRapidProResponse_groupSearch, (server) => {
+  testServer.start(6700, testServer.testResponses.testRapidProResponse_groupSearch, (server) => {
     let getGroupUUID = rapidpro.__get__('getGroupUUID')
     getGroupUUID(mediatorConf_withGroup, (err, groupUUID, orchestrations) => {
       t.error(err)
@@ -267,7 +119,7 @@ tap.test('rapidpro.getGroupUUID should fetch a group', (t) => {
 })
 
 tap.test('rapidpro.getGroupUUID should respond with null value if no results', (t) => {
-  mockRapidPro(6700, testRapidProResponse_noResults, (server) => {
+  testServer.start(6700, testServer.testResponses.testRapidProResponse_noResults, (server) => {
     let getGroupUUID = rapidpro.__get__('getGroupUUID')
     getGroupUUID(mediatorConf_withGroup, (err, groupUUID, orchestrations) => {
       t.error(err)
@@ -279,7 +131,7 @@ tap.test('rapidpro.getGroupUUID should respond with null value if no results', (
 })
 
 tap.test('rapidpro.getContacts should filter out contacts that do not have a field.globalid', (t) => {
-  mockRapidPro(6700, testRapidProResponse_noGlobalId, (server) => {
+  testServer.start(6700, testServer.testResponses.testRapidProResponse_noGlobalId, (server) => {
     let getContacts = rapidpro.__get__('getContacts')
     getContacts(mediatorConf, null, (err, contacts, orchestrations) => {
       t.error(err)
@@ -298,7 +150,7 @@ tap.test('rapidpro.getContacts should filter out contacts that do not have a fie
 
 tap.test('rapidpro.getContactsAsCSDEntities should fetch contacts and convert each entry', (t) => {
   rapidpro.__with__({
-    getContacts: (config, groupUUID, callback) => callback(null, testRapidProResponse.results, []),
+    getContacts: (config, groupUUID, callback) => callback(null, testServer.testResponses.testRapidProResponse.results, []),
     buildContactsByGlobalIDMap: (contacts) => {
       return {
         '86fe9d78-8c44-4815-ace7-5b4e0f5eadfb': [],
@@ -325,7 +177,7 @@ tap.test('rapidpro.getContactsAsCSDEntities should fetch contacts and convert ea
 
 tap.test('rapidpro.getContactsAsCSDEntities should forward the orchestrations setup by getContacts', (t) => {
   rapidpro.__with__({
-    getContacts: (config, groupUUID, callback) => callback(null, testRapidProResponse.results, [{data: 'test orch'}]),
+    getContacts: (config, groupUUID, callback) => callback(null, testServer.testResponses.testRapidProResponse.results, [{data: 'test orch'}]),
     buildContactsByGlobalIDMap: (contacts) => {
       return {
         '86fe9d78-8c44-4815-ace7-5b4e0f5eadfb': [],
@@ -351,8 +203,8 @@ tap.test('rapidpro.getContactsAsCSDEntities should forward the orchestrations se
 
 tap.test('rapidpro.getContactsAsCSDEntities should filter by groupname', (t) => {
   rapidpro.__with__({
-    getGroupUUID: (config, callback) => callback(null, testRapidProResponse_groupSearch.results[0].uuid, []),
-    getContacts: (config, groupUUID, callback) => callback(null, testRapidProResponse.results, [{data: 'test orch'}]),
+    getGroupUUID: (config, callback) => callback(null, testServer.testResponses.testRapidProResponse_groupSearch.results[0].uuid, []),
+    getContacts: (config, groupUUID, callback) => callback(null, testServer.testResponses.testRapidProResponse.results, [{data: 'test orch'}]),
     buildContactsByGlobalIDMap: (contacts) => {
       return {
         '86fe9d78-8c44-4815-ace7-5b4e0f5eadfb': [],
@@ -379,7 +231,7 @@ tap.test('rapidpro.getContactsAsCSDEntities should filter by groupname', (t) => 
 tap.test('rapidpro.getContactsAsCSDEntities should return an if groupname could not be resolved', (t) => {
   rapidpro.__with__({
     getGroupUUID: (config, callback) => callback(null, null, []),
-    getContacts: (config, groupUUID, callback) => callback(null, testRapidProResponse.results, [{data: 'test orch'}]),
+    getContacts: (config, groupUUID, callback) => callback(null, testServer.testResponses.testRapidProResponse.results, [{data: 'test orch'}]),
     buildContactsByGlobalIDMap: (contacts) => {
       return {
         '86fe9d78-8c44-4815-ace7-5b4e0f5eadfb': [],
@@ -397,8 +249,8 @@ tap.test('rapidpro.getContactsAsCSDEntities should return an if groupname could 
 
 tap.test('rapidpro.getContactsAsCSDEntities should forward group search and contacts orchestrations', (t) => {
   rapidpro.__with__({
-    getGroupUUID: (config, callback) => callback(null, testRapidProResponse_groupSearch.results[0].uuid, [{data: 'group search'}]),
-    getContacts: (config, groupUUID, callback) => callback(null, testRapidProResponse.results, [{data: 'contact search'}]),
+    getGroupUUID: (config, callback) => callback(null, testServer.testResponses.testRapidProResponse_groupSearch.results[0].uuid, [{data: 'group search'}]),
+    getContacts: (config, groupUUID, callback) => callback(null, testServer.testResponses.testRapidProResponse.results, [{data: 'contact search'}]),
     buildContactsByGlobalIDMap: (contacts) => {
       return {
         '86fe9d78-8c44-4815-ace7-5b4e0f5eadfb': [],
@@ -424,7 +276,7 @@ tap.test('rapidpro.getContactsAsCSDEntities should forward group search and cont
 
 tap.test('rapidpro.buildContactsByGlobalIDMap should group contacts by globalid', (t) => {
   let buildContactsByGlobalIDMap = rapidpro.__get__('buildContactsByGlobalIDMap')
-  let result = buildContactsByGlobalIDMap(testRapidProResponse_multi.results)
+  let result = buildContactsByGlobalIDMap(testServer.testResponses.testRapidProResponse_multi.results)
   t.ok(result)
   t.ok(result['test-1'])
   t.ok(result['test-2'])
@@ -438,7 +290,7 @@ tap.test('rapidpro.buildContactsByGlobalIDMap should group contacts by globalid'
 
 tap.test('rapidpro.convertContactToCSD should build a CSD provider string from a contact', (t) => {
   let convertContactToCSD = rapidpro.__get__('convertContactToCSD')
-  let result = convertContactToCSD(mediatorConf, 'test-1', [testRapidProResponse.results[0]])
+  let result = convertContactToCSD(mediatorConf, 'test-1', [testServer.testResponses.testRapidProResponse.results[0]])
   let doc = new Dom().parseFromString(result)
 
   let entityID = xpath.select1('/provider/@entityID', doc)
@@ -466,7 +318,7 @@ tap.test('rapidpro.convertContactToCSD should build a CSD provider string from a
 
 tap.test('rapidpro.convertContactToCSD should build a CSD provider string from multiple contacts', (t) => {
   let convertContactToCSD = rapidpro.__get__('convertContactToCSD')
-  let result = convertContactToCSD(mediatorConf, 'test-1', [testRapidProResponse_multi.results[0], testRapidProResponse_multi.results[2]])
+  let result = convertContactToCSD(mediatorConf, 'test-1', [testServer.testResponses.testRapidProResponse_multi.results[0], testServer.testResponses.testRapidProResponse_multi.results[2]])
   let doc = new Dom().parseFromString(result)
 
   let entityID = xpath.select1('/provider/@entityID', doc)

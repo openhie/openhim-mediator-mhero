@@ -1,0 +1,174 @@
+#!/usr/bin/env node
+'use strict'
+
+const http = require('http')
+
+const testRapidProResponse = {
+  count: 2,
+  next: null,
+  previous: null,
+  results: [
+    {
+      uuid: '86fe9d78-8c44-4815-ace7-5b4e0f5eadfb',
+      name: 'One Contact',
+      language: null,
+      group_uuids: ['036204f3-7967-44b5-964e-c64b961e7285'],
+      urns: [ 'tel:27731234567' ],
+      fields: {
+        globalid: 'test-1'
+      },
+      blocked: false,
+      failed: false,
+      modified_on: '2016-03-17T15:16:52.215Z',
+      phone: '',
+      groups: []
+    },
+    {
+      uuid: 'b1bddaa4-7461-4613-b35e-14a2eba7712d',
+      name: 'Two Contact',
+      language: null,
+      group_uuids: ['036204f3-7967-44b5-964e-c64b961e7285'],
+      urns: [ 'tel:27833450987' ],
+      fields: {
+        globalid: 'test-2'
+      },
+      blocked: false,
+      failed: false,
+      modified_on: '2016-03-17T14:07:50.623Z',
+      phone: '',
+      groups: []
+    }
+  ]
+}
+
+const testRapidProResponse_noGlobalId = {
+  count: 2,
+  next: null,
+  previous: null,
+  results: [
+    {
+      uuid: '86fe9d78-8c44-4815-ace7-5b4e0f5eadfb',
+      name: 'One Contact',
+      language: null,
+      group_uuids: ['036204f3-7967-44b5-964e-c64b961e7285'],
+      urns: [ 'tel:27731234567' ],
+      fields: {
+        globalid: 'test-1'
+      },
+      blocked: false,
+      failed: false,
+      modified_on: '2016-03-17T15:16:52.215Z',
+      phone: '',
+      groups: []
+    },
+    {
+      uuid: 'b1bddaa4-7461-4613-b35e-14a2eba7712d',
+      name: 'Two Contact',
+      language: null,
+      group_uuids: ['036204f3-7967-44b5-964e-c64b961e7285'],
+      urns: [ 'tel:27833450987' ],
+      fields: {
+      },
+      blocked: false,
+      failed: false,
+      modified_on: '2016-03-17T14:07:50.623Z',
+      phone: '',
+      groups: []
+    }
+  ]
+}
+
+// first and third entries share the same globalid
+const testRapidProResponse_multi = {
+  count: 3,
+  next: null,
+  previous: null,
+  results: [
+    {
+      uuid: '86fe9d78-8c44-4815-ace7-5b4e0f5eadfb',
+      name: 'One Contact',
+      language: null,
+      group_uuids: ['036204f3-7967-44b5-964e-c64b961e7285'],
+      urns: [ 'tel:27731234567' ],
+      fields: {
+        globalid: 'test-1'
+      },
+      blocked: false,
+      failed: false,
+      modified_on: '2016-03-17T15:16:52.215Z',
+      phone: '',
+      groups: []
+    },
+    {
+      uuid: 'b1bddaa4-7461-4613-b35e-14a2eba7712d',
+      name: 'Two Contact',
+      language: null,
+      group_uuids: ['036204f3-7967-44b5-964e-c64b961e7285'],
+      urns: [ 'tel:27833450987' ],
+      fields: {
+        globalid: 'test-2'
+      },
+      blocked: false,
+      failed: false,
+      modified_on: '2016-03-17T14:07:50.623Z',
+      phone: '',
+      groups: []
+    },
+    {
+      uuid: 'f3873a12-9e3d-485f-8d30-99fd221fc437',
+      name: 'Contact One',
+      language: null,
+      group_uuids: ['036204f3-7967-44b5-964e-c64b961e7285'],
+      urns: [ 'tel:27732345678' ],
+      fields: {
+        globalid: 'test-1'
+      },
+      blocked: false,
+      failed: false,
+      modified_on: '2016-03-17T15:16:52.215Z',
+      phone: '',
+      groups: []
+    }
+  ]
+}
+
+const testRapidProResponse_groupSearch = {
+  count: 1,
+  next: null,
+  previous: null,
+  results: [
+    {
+      uuid: '036204f3-7967-44b5-964e-c64b961e7285',
+      name: 'group-1'
+    }
+  ]
+}
+
+const testRapidProResponse_noResults = {
+  count: 0,
+  next: null,
+  previous: null,
+  results: [
+  ]
+}
+
+exports.testResponses = {
+  testRapidProResponse: testRapidProResponse,
+  testRapidProResponse_noGlobalId: testRapidProResponse_noGlobalId,
+  testRapidProResponse_multi: testRapidProResponse_multi,
+  testRapidProResponse_groupSearch: testRapidProResponse_groupSearch,
+  testRapidProResponse_noResults: testRapidProResponse_noResults
+}
+
+function start (port, responseDoc, callback) {
+  let server = http.createServer((req, res) => {
+    res.end(JSON.stringify(responseDoc))
+  })
+  server.listen(port, () => callback(server))
+}
+exports.start = start
+
+if (!module.parent) {
+  // if this script is run directly, start the server
+  start(6700, testRapidProResponse, () => console.log('Mock RapidPro Server listening on 6700...'))
+}
