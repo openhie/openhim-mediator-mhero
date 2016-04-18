@@ -22,7 +22,7 @@ exports.buildOrchestration = (name, beforeTimestamp, res, body) => {
 exports.convertCSDToContact = (entity) => {
   const doc = new Dom().parseFromString(entity)
   const select = xpath.useNamespaces({'csd': 'urn:ihe:iti:csd:2013'})
-  const name = select('/csd:provider/csd:demographic/csd:name/csd:commonName/text()', doc).toString()
+  const name = select('/csd:provider/csd:demographic/csd:name/csd:commonName/text()', doc)[0].toString()
   const telNodes = select('/csd:provider/csd:demographic/csd:contactPoint/csd:codedType[@code="BP" and @codingScheme="urn:ihe:iti:csd:2013:contactPoint"]/text()', doc)
   let tels = []
   telNodes.forEach((telNode) => {
