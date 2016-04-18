@@ -1,6 +1,7 @@
 'use strict'
 
-const http = require('http')
+const request = require('request')
+const URI = require('urijs')
 const utils = require('./utils')
 
 // openinfoman object factory function
@@ -16,37 +17,28 @@ module.exports = function (cnf) {
     * callback(err, result, orchestrations).
     */
     fetchAllEntities: function (callback) {
+      let uri = new URI(config.url)
+        .segment('/CSD/csr/')
+        .segment(config.queryDocument)
+        .segment('/urn:ihe:iti:csd:2014:stored-function:provider-search')
+
       var options = {
-        hostname: config.host,
-        port: config.port,
-        path: config.path,
-        method: 'POST',
+        url: uri.toString(),
         headers: {
           'Content-Type': 'text/xml'
-        }
+        },
+        body: `<csd:requestParams xmlns:csd="urn:ihe:iti:csd:2013">
+        </csd:requestParams>`
       }
 
       let before = new Date()
 
-      let req = http.request(options, function (res) {
-        let body = ''
-        res.on('data', function (chunk) {
-          body += chunk.toString()
-        })
-        res.on('end', function () {
-          callback(null, body, [utils.buildOrchestration('OpenInfoMan fetch all entities', before, res, body)])
-        })
+      request.post(options, function (err, res, body) {
+        if (err) {
+          return callback(err)
+        }
+        callback(null, body, [utils.buildOrchestration('OpenInfoMan fetch all entities', before, res, body)])
       })
-
-      req.on('error', function (err) {
-        callback(err)
-      })
-
-      let body = `<csd:requestParams xmlns:csd="urn:ihe:iti:csd:2013">
-                  </csd:requestParams>`
-
-      req.write(body)
-      req.end()
     }
   }
 }

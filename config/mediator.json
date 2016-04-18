@@ -60,7 +60,33 @@
           "type": "string"
         }
       ]
+    }, {
+      "param": "openinfoman",
+      "displayName": "OpenInfoMan Server",
+      "description": "The OpenInfoMan server to sync providers with",
+      "type": "struct",
+      "template": [
+        {
+          "param": "url",
+          "displayName": "URL",
+          "description": "The base URL (e.g. https://localhost:8984)",
+          "type": "string"
+        },
+        {
+          "param": "queryDocument",
+          "displayName": "Provider query document",
+          "description": "The CSD document to query providers from in order to send to RapidPro",
+          "type": "string"
+        },
+        {
+          "param": "rapidProDocument",
+          "displayName": "RapidPro contacts document",
+          "description": "The CSD document to store contacts retrieved from RapidPro",
+          "type": "string"
+        }
+      ]
     }
+    
   ],
   "config": {
     "upstream": {
@@ -72,6 +98,11 @@
       "slug": "https://rapidpro.io",
       "authtoken": "",
       "groupname": ""
+    },
+    "openinfoman": {
+      "url": "http://localhost:8984",
+      "queryDocument": "Providers",
+      "rapidProDocument": "RapidProContacts"
     }
   }
 }

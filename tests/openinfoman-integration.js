@@ -11,9 +11,9 @@ console.log = () => {}
 console.error = () => {}
 
 const openinfoman = Openinfoman({
-  path: '/CSD/csr/CSD-Providers-Connectathon-20150120/careServicesRequest/urn:ihe:iti:csd:2014:stored-function:provider-search',
-  port: 8984,
-  host: 'localhost'
+  url: 'http://localhost:8984',
+  queryDocument: 'Providers',
+  rapidProDocument: 'RapidProContacts'
 })
 
 tap.test('openinfoman.fetchAllEntities should fetch all entries', (t) => {
