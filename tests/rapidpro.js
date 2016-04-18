@@ -9,7 +9,7 @@ const testServer = require('./test-rapidpro-server')
 const rapidpro = rewire('../rapidpro.js')
 
 // don't log during tests - comment these out for debugging
-// console.log = () => {}
+console.log = () => {}
 console.error = () => {}
 
 const mediatorConf = {
@@ -228,7 +228,7 @@ tap.test('rapidpro.getContactsAsCSDEntities should filter by groupname', (t) => 
   })
 })
 
-tap.test('rapidpro.getContactsAsCSDEntities should return an if groupname could not be resolved', (t) => {
+tap.test('rapidpro.getContactsAsCSDEntities should return an error if groupname could not be resolved', (t) => {
   rapidpro.__with__({
     getGroupUUID: (config, callback) => callback(null, null, []),
     getContacts: (config, groupUUID, callback) => callback(null, testServer.testResponses.testRapidProResponse.results, [{data: 'test orch'}]),
@@ -302,7 +302,7 @@ tap.test('rapidpro.convertContactToCSD should build a CSD provider string from a
   t.equal('86fe9d78-8c44-4815-ace7-5b4e0f5eadfb', otherID.nodeValue)
 
   let codedType = xpath.select1('/provider/codedType/@code', doc)
-  t.ok(otherID)
+  t.ok(codedType)
   t.equal('036204f3-7967-44b5-964e-c64b961e7285', codedType.value)
 
   let commonName = xpath.select1('/provider/demographic/name/commonName/text()', doc)
@@ -330,7 +330,7 @@ tap.test('rapidpro.convertContactToCSD should build a CSD provider string from m
   t.equal('86fe9d78-8c44-4815-ace7-5b4e0f5eadfb,f3873a12-9e3d-485f-8d30-99fd221fc437', otherID.nodeValue)
 
   let codedType = xpath.select1('/provider/codedType/@code', doc)
-  t.ok(otherID)
+  t.ok(codedType)
   t.equal('036204f3-7967-44b5-964e-c64b961e7285', codedType.value)
 
   let commonName = xpath.select('/provider/demographic/name/commonName/text()', doc)
