@@ -170,9 +170,9 @@ function convertContactToCSD (config, globalid, contacts) {
  * @param {Function} callback (err, contacts, orchestrations)
  */
 function getContactsAsCSDEntities (config, callback) {
-  let getContactsCallback = (err, contacts, orchestrations) => {
+  let getContactsCallback = (_orchestrations) => (err, contacts, orchestrations) => {
     if (err) {
-      callback(err)
+      callback(err, null, _orchestrations)
     } else {
       let contactsMap = buildContactsByGlobalIDMap(contacts)
       let converted = []
@@ -181,7 +181,7 @@ function getContactsAsCSDEntities (config, callback) {
         converted.push(convertContactToCSD(config, k, contactsMap[k]))
       }
 
-      callback(null, converted, orchestrations)
+      callback(null, converted, _orchestrations.concat(orchestrations))
     }
   }
 
@@ -190,11 +190,15 @@ function getContactsAsCSDEntities (config, callback) {
       if (err) {
         callback(err)
       } else {
-        getContacts(config, groupUUID, getContactsCallback)
+        if (groupUUID) {
+          getContacts(config, groupUUID, getContactsCallback(orchestrations))
+        } else {
+          callback(new Error(`Configured group name '${config.rapidpro.groupname}' could not be resolved`), null, orchestrations)
+        }
       }
     })
   } else {
-    getContacts(config, null, getContactsCallback)
+    getContacts(config, null, getContactsCallback([]))
   }
 }
 
