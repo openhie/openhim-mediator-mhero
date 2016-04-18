@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "standard && tap --cov --reporter=spec tests/unit.js tests/integration.js tests/openinfoman-integration.js tests/rapidpro.js",
-    "cov": "npm test -- --coverage-report=lcov",
-    "test:unit": "tap --cov --reporter=spec tests/unit.js",
-    "test:integration": "tap --cov --reporter=spec tests/integration.js",
+    "test": "tap --cov --reporter=spec tests/unit.js tests/integration.js tests/openinfoman-integration.js tests/rapidpro.js tests/utils.js && npm -s run stylecheck",
+    "stylecheck": "standard -v | snazzy",
+    "cov": "npm test -- --coverage-report=lcov && npm -s run stylecheck",
+    "test:unit": "tap --cov --reporter=spec tests/unit.js && npm -s run stylecheck",
+    "test:integration": "tap --cov --reporter=spec tests/integration.js && npm -s run stylecheck",
     "test:watch": "onchange '**/*.js' -- npm test"
   },
   "repository": {
@@ -35,6 +36,7 @@
   "devDependencies": {
     "onchange": "^2.3.0",
     "rewire": "^2.5.1",
+    "snazzy": "^3.0.1",
     "standard": "^6.0.8",
     "tap": "^5.7.1"
   }
