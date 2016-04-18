@@ -19,7 +19,7 @@ function groupsURL (baseURL, groupName) {
     .toString()
 }
 
-function contactsFilter (contact) {
+function hasGlobalID (contact) {
   return contact.fields && contact.fields.globalid
 }
 
@@ -50,7 +50,7 @@ function getGroupUUID (config, callback) {
     let orchestrations = [utils.buildOrchestration(before, res, body)]
 
     if (res.statusCode !== 200) {
-      callback(`RapidPro responded with status ${res.statusCode}`, null, orchestrations)
+      callback(new Error(`RapidPro responded with status ${res.statusCode}`), null, orchestrations)
       return
     }
 
@@ -99,7 +99,7 @@ function getContacts (config, groupUUID, callback) {
     if (!results) {
       results = []
     }
-    results = results.filter(contactsFilter)
+    results = results.filter(hasGlobalID)
 
     callback(null, results, orchestrations)
   })
@@ -126,6 +126,7 @@ function buildContactsByGlobalIDMap (contacts) {
  * convertContactToCSD - convert a RapidPro contact into CSD
  *
  * @param  {Object} config a RapidPro contact
+ * @param  {String} globalid the contact's globalid
  * @return {String} the converted contact
  */
 function convertContactToCSD (config, globalid, contacts) {
