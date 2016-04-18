@@ -1,6 +1,7 @@
 'use strict'
 
 const http = require('http')
+const utils = require('./utils')
 
 // openinfoman object factory function
 module.exports = function (cnf) {
@@ -11,7 +12,8 @@ module.exports = function (cnf) {
     * fetchAllEntities - fetches all entities in a particular CSD document and
     * callsback with the full CSD document.
     *
-    * @param {Function} callback The callback takes the form of callback(err, result).
+    * @param {Function} callback The callback takes the form of
+    * callback(err, result, orchestrations).
     */
     fetchAllEntities: function (callback) {
       var options = {
@@ -24,13 +26,15 @@ module.exports = function (cnf) {
         }
       }
 
+      let before = new Date()
+
       let req = http.request(options, function (res) {
         let body = ''
         res.on('data', function (chunk) {
           body += chunk.toString()
         })
         res.on('end', function () {
-          callback(null, body)
+          callback(null, body, [utils.buildOrchestration('OpenInfoMan fetch all entities', before, res, body)])
         })
       })
 

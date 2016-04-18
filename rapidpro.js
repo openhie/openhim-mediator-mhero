@@ -2,6 +2,7 @@
 const request = require('request')
 const URI = require('urijs')
 const _ = require('lodash')
+const utils = require('./utils')
 
 function contactsURL (baseURL, groupUUID) {
   let url = URI(baseURL).segment('api/v1/contacts.json')
@@ -16,22 +17,6 @@ function groupsURL (baseURL, groupName) {
     .segment('api/v1/groups.json')
     .addQuery('name', groupName)
     .toString()
-}
-
-function buildOrchestration (beforeTimestamp, res, body) {
-  return {
-    name: 'RapidPro Fetch Contacts',
-    request: {
-      method: 'GET',
-      timestamp: beforeTimestamp
-    },
-    response: {
-      status: res.statusCode,
-      headers: res.headers,
-      body: body,
-      timestamp: new Date()
-    }
-  }
 }
 
 function contactsFilter (contact) {
@@ -62,7 +47,7 @@ function getGroupUUID (config, callback) {
       return
     }
 
-    let orchestrations = [buildOrchestration(before, res, body)]
+    let orchestrations = [utils.buildOrchestration(before, res, body)]
 
     if (res.statusCode !== 200) {
       callback(`RapidPro responded with status ${res.statusCode}`, null, orchestrations)
@@ -103,7 +88,7 @@ function getContacts (config, groupUUID, callback) {
       return
     }
 
-    let orchestrations = [buildOrchestration(before, res, body)]
+    let orchestrations = [utils.buildOrchestration('RapidPro Fetch Contacts', before, res, body)]
 
     if (res.statusCode !== 200) {
       callback(`RapidPro responded with status ${res.statusCode}`, null, orchestrations)
