@@ -45,6 +45,11 @@
           "type": "string"
         },
         {
+          "param": "slug",
+          "displayName": "Slug",
+          "type": "string"
+        },
+        {
           "param": "authtoken",
           "displayName": "Authentication Token",
           "type": "string"
@@ -64,6 +69,7 @@
     },
     "rapidpro": {
       "url": "https://rapidpro.io",
+      "slug": "https://rapidpro.io",
       "authtoken": "",
       "groupname": ""
     }
