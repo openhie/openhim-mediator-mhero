@@ -178,11 +178,21 @@ exports.testResponses = {
  * start - Starts the test server
  *
  * @param  {Number} port        eg. 6700
- * @param  {Object} responseDoc the doc to return
+ * @param  {Object} responseDoc the doc to return on contact queries
+ * @param  {Object} responseDoc the doc to return on group queries
  * @param  {String} method      (optional) eg. 'POST'
  * @param  {Function} callback  (server) => {}
  */
-function start (port, responseDoc, method, callback) {
+function start (port, responseDoc, groupDoc, method, callback) {
+  if (typeof groupDoc === 'function') {
+    callback = groupDoc
+    method = undefined
+    groupDoc = undefined
+  }
+  if (typeof groupDoc === 'string') {
+    callback = method
+    method = groupDoc
+  }
   if (typeof method === 'function') {
     callback = method
     method = undefined
@@ -193,7 +203,11 @@ function start (port, responseDoc, method, callback) {
       res.writeHead(400)
       res.end()
     }
-    res.end(JSON.stringify(responseDoc))
+    if (groupDoc && req.url.indexOf('groups')>-1) {
+      res.end(JSON.stringify(groupDoc))
+    } else {
+      res.end(JSON.stringify(responseDoc))
+    }
   })
   server.listen(port, () => callback(server))
 }

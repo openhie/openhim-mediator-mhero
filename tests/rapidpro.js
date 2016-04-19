@@ -6,57 +6,28 @@ const xpath = require('xpath')
 const Dom = require('xmldom').DOMParser
 const testServer = require('./test-rapidpro-server')
 
-const rapidpro = rewire('../rapidpro.js')
+const RapidPro = require('../rapidpro.js')
 
 // don't log during tests - comment these out for debugging
 console.log = () => {}
 console.error = () => {}
 
-const mediatorConf = {
-  rapidpro: {
-    url: 'http://localhost:6700',
-    slug: 'http://localhost:6700',
-    authtoken: '1234secret'
-  }
-}
-
-const mediatorConf_withGroup = {
-  rapidpro: {
-    url: 'http://localhost:6700',
-    slug: 'http://localhost:6700',
-    authtoken: '1234secret',
-    groupname: 'group-1'
-  }
-}
-
-tap.test('rapidpro.contactsURL should build up the url from a base url', (t) => {
-  let contactsURL = rapidpro.__get__('contactsURL')
-  t.equal(contactsURL('http://test:1234/base'), 'http://test:1234/base/api/v1/contacts.json')
-  t.end()
+const rapidpro = RapidPro({
+  url: 'http://localhost:6700',
+  slug: 'http://localhost:6700',
+  authtoken: '1234secret'
 })
 
-tap.test('rapidpro.contactsURL should add group uuid param if supplied', (t) => {
-  let contactsURL = rapidpro.__get__('contactsURL')
-  t.equal(contactsURL('http://test', '1234'), 'http://test/api/v1/contacts.json?group_uuids=1234')
-  t.end()
-})
-
-tap.test('rapidpro.contactsURL should handle trailing slashes correctly', (t) => {
-  let contactsURL = rapidpro.__get__('contactsURL')
-  t.equal(contactsURL('http://test:1234/base/'), 'http://test:1234/base/api/v1/contacts.json')
-  t.end()
-})
-
-tap.test('rapidpro.groupsURL should build up the url from a base url', (t) => {
-  let groupsURL = rapidpro.__get__('groupsURL')
-  t.equal(groupsURL('http://test', 'group1'), 'http://test/api/v1/groups.json?name=group1')
-  t.end()
+const rapidpro_withGroup = RapidPro({
+  url: 'http://localhost:6700',
+  slug: 'http://localhost:6700',
+  authtoken: '1234secret',
+  groupname: 'group-1'
 })
 
 tap.test('rapidpro.getContacts should fetch contacts', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse, (server) => {
-    let getContacts = rapidpro.__get__('getContacts')
-    getContacts(mediatorConf, null, (err, contacts, orchestrations) => {
+    rapidpro.getContacts(null, (err, contacts, orchestrations) => {
       t.error(err)
       t.ok(contacts)
 
@@ -73,8 +44,7 @@ tap.test('rapidpro.getContacts should fetch contacts', (t) => {
 })
 
 tap.test('rapidpro.getContacts should respond with an error if server unavailable', (t) => {
-  let getContacts = rapidpro.__get__('getContacts')
-  getContacts(mediatorConf, null, (err, contacts, orchestrations) => {
+  rapidpro.getContacts(null, (err, contacts, orchestrations) => {
     t.ok(err)
     t.end()
   })
@@ -82,8 +52,7 @@ tap.test('rapidpro.getContacts should respond with an error if server unavailabl
 
 tap.test('rapidpro.getContacts should add orchestrations', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse, (server) => {
-    let getContacts = rapidpro.__get__('getContacts')
-    getContacts(mediatorConf, null, (err, contacts, orchestrations) => {
+    rapidpro.getContacts(null, (err, contacts, orchestrations) => {
       t.error(err)
       t.ok(orchestrations)
 
@@ -103,12 +72,11 @@ tap.test('rapidpro.getContacts should add orchestrations', (t) => {
 
 tap.test('rapidpro.getGroupUUID should fetch a group', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse_groupSearch, (server) => {
-    let getGroupUUID = rapidpro.__get__('getGroupUUID')
-    getGroupUUID(mediatorConf_withGroup, (err, groupUUID, orchestrations) => {
+    rapidpro_withGroup.getGroupUUID((err, groupUUID, orchestrations) => {
       t.error(err)
       t.ok(groupUUID)
 
-      if (getGroupUUID) {
+      if (groupUUID) {
         t.equal('036204f3-7967-44b5-964e-c64b961e7285', groupUUID)
       }
 
@@ -120,8 +88,7 @@ tap.test('rapidpro.getGroupUUID should fetch a group', (t) => {
 
 tap.test('rapidpro.getGroupUUID should respond with null value if no results', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse_noResults, (server) => {
-    let getGroupUUID = rapidpro.__get__('getGroupUUID')
-    getGroupUUID(mediatorConf_withGroup, (err, groupUUID, orchestrations) => {
+    rapidpro_withGroup.getGroupUUID((err, groupUUID, orchestrations) => {
       t.error(err)
       t.notOk(groupUUID)
       server.close()
@@ -132,8 +99,7 @@ tap.test('rapidpro.getGroupUUID should respond with null value if no results', (
 
 tap.test('rapidpro.getContacts should filter out contacts that do not have a field.globalid', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse_noGlobalId, (server) => {
-    let getContacts = rapidpro.__get__('getContacts')
-    getContacts(mediatorConf, null, (err, contacts, orchestrations) => {
+    rapidpro.getContacts(null, (err, contacts, orchestrations) => {
       t.error(err)
       t.ok(contacts)
 
@@ -148,149 +114,123 @@ tap.test('rapidpro.getContacts should filter out contacts that do not have a fie
   })
 })
 
+let testEntityID = (t, xml, expected) => {
+  let doc = new Dom().parseFromString(xml)
+  let entityID = xpath.select1('/provider/@entityID', doc)
+  t.ok(entityID.value)
+  t.equals(entityID.value, expected, `XML should contain a provider with entity ID`)
+}
+
 tap.test('rapidpro.getContactsAsCSDEntities should fetch contacts and convert each entry', (t) => {
-  rapidpro.__with__({
-    getContacts: (config, groupUUID, callback) => callback(null, testServer.testResponses.testRapidProResponse.results, []),
-    buildContactsByGlobalIDMap: (contacts) => {
-      return {
-        '86fe9d78-8c44-4815-ace7-5b4e0f5eadfb': [],
-        'b1bddaa4-7461-4613-b35e-14a2eba7712d': []
-      }
-    },
-    convertContactToCSD: (config, globalid, contacts) => `test ${globalid}`
-  })(() => {
-    rapidpro.getContactsAsCSDEntities(mediatorConf, (err, results, orchestrations) => {
+  testServer.start(6700, testServer.testResponses.testRapidProResponse, (server) => {
+    rapidpro.getContactsAsCSDEntities((err, results, orchestrations) => {
       t.error(err)
       t.ok(results)
 
       if (results) {
         t.equal(2, results.length)
-        // did getContactsAsCSDEntities call getContacts, buildContactsByGlobalIDMap and apply convertContactToCSD to each entry
-        t.equal('test 86fe9d78-8c44-4815-ace7-5b4e0f5eadfb', results[0])
-        t.equal('test b1bddaa4-7461-4613-b35e-14a2eba7712d', results[1])
+
+        testEntityID(t, results[0], 'test-1')
+        testEntityID(t, results[1], 'test-2')
       }
 
+      server.close()
       t.end()
     })
   })
 })
 
 tap.test('rapidpro.getContactsAsCSDEntities should forward the orchestrations setup by getContacts', (t) => {
-  rapidpro.__with__({
-    getContacts: (config, groupUUID, callback) => callback(null, testServer.testResponses.testRapidProResponse.results, [{data: 'test orch'}]),
-    buildContactsByGlobalIDMap: (contacts) => {
-      return {
-        '86fe9d78-8c44-4815-ace7-5b4e0f5eadfb': [],
-        'b1bddaa4-7461-4613-b35e-14a2eba7712d': []
-      }
-    },
-    convertContactToCSD: (config, globalid, contacts) => `test ${globalid}`
-  })(() => {
-    rapidpro.getContactsAsCSDEntities(mediatorConf, (err, results, orchestrations) => {
+  testServer.start(6700, testServer.testResponses.testRapidProResponse, (server) => {
+    rapidpro.getContactsAsCSDEntities((err, results, orchestrations) => {
       t.error(err)
       t.ok(orchestrations)
 
       if (orchestrations) {
         t.equal(1, orchestrations.length)
         t.ok(orchestrations[0])
-        t.equal('test orch', orchestrations[0].data)
+        t.equals(orchestrations[0].name, 'RapidPro Fetch Contacts')
       }
 
+      server.close()
       t.end()
     })
   })
 })
 
 tap.test('rapidpro.getContactsAsCSDEntities should filter by groupname', (t) => {
-  rapidpro.__with__({
-    getGroupUUID: (config, callback) => callback(null, testServer.testResponses.testRapidProResponse_groupSearch.results[0].uuid, []),
-    getContacts: (config, groupUUID, callback) => callback(null, testServer.testResponses.testRapidProResponse.results, [{data: 'test orch'}]),
-    buildContactsByGlobalIDMap: (contacts) => {
-      return {
-        '86fe9d78-8c44-4815-ace7-5b4e0f5eadfb': [],
-        'b1bddaa4-7461-4613-b35e-14a2eba7712d': []
-      }
-    },
-    convertContactToCSD: (config, globalid, contacts) => `test ${globalid}`
-  })(() => {
-    rapidpro.getContactsAsCSDEntities(mediatorConf_withGroup, (err, results, orchestrations) => {
+  testServer.start(6700, testServer.testResponses.testRapidProResponse, testServer.testRapidProResponse_groupSearch, (server) => {
+    rapidpro_withGroup.getContactsAsCSDEntities((err, results, orchestrations) => {
       t.error(err)
       t.ok(results)
 
       if (results) {
         t.equal(2, results.length)
-        t.equal('test 86fe9d78-8c44-4815-ace7-5b4e0f5eadfb', results[0])
-        t.equal('test b1bddaa4-7461-4613-b35e-14a2eba7712d', results[1])
+        testEntityID(t, results[0], 'test-1')
+        testEntityID(t, results[1], 'test-2')
       }
 
+      server.close()
       t.end()
     })
   })
 })
 
 tap.test('rapidpro.getContactsAsCSDEntities should return an error if groupname could not be resolved', (t) => {
-  rapidpro.__with__({
-    getGroupUUID: (config, callback) => callback(null, null, []),
-    getContacts: (config, groupUUID, callback) => callback(null, testServer.testResponses.testRapidProResponse.results, [{data: 'test orch'}]),
-    buildContactsByGlobalIDMap: (contacts) => {
-      return {
-        '86fe9d78-8c44-4815-ace7-5b4e0f5eadfb': [],
-        'b1bddaa4-7461-4613-b35e-14a2eba7712d': []
-      }
-    },
-    convertContactToCSD: (config, globalid, contacts) => `test ${globalid}`
-  })(() => {
-    rapidpro.getContactsAsCSDEntities(mediatorConf_withGroup, (err, results, orchestrations) => {
+  testServer.start(6700, testServer.testResponses.testRapidProResponse, testServer.testResponses.testRapidProResponse_noResults, (server) => {
+    rapidpro_withGroup.getContactsAsCSDEntities((err, results, orchestrations) => {
       t.ok(err)
+      server.close()
       t.end()
     })
   })
 })
 
 tap.test('rapidpro.getContactsAsCSDEntities should forward group search and contacts orchestrations', (t) => {
-  rapidpro.__with__({
-    getGroupUUID: (config, callback) => callback(null, testServer.testResponses.testRapidProResponse_groupSearch.results[0].uuid, [{data: 'group search'}]),
-    getContacts: (config, groupUUID, callback) => callback(null, testServer.testResponses.testRapidProResponse.results, [{data: 'contact search'}]),
-    buildContactsByGlobalIDMap: (contacts) => {
-      return {
-        '86fe9d78-8c44-4815-ace7-5b4e0f5eadfb': [],
-        'b1bddaa4-7461-4613-b35e-14a2eba7712d': []
-      }
-    },
-    convertContactToCSD: (config, globalid, contacts) => `test ${globalid}`
-  })(() => {
-    rapidpro.getContactsAsCSDEntities(mediatorConf_withGroup, (err, results, orchestrations) => {
+  testServer.start(6700, testServer.testResponses.testRapidProResponse, testServer.testRapidProResponse_groupSearch, (server) => {
+    rapidpro_withGroup.getContactsAsCSDEntities((err, results, orchestrations) => {
       t.error(err)
       t.ok(orchestrations)
 
       if (orchestrations) {
         t.equal(2, orchestrations.length)
-        t.equal('group search', orchestrations[0].data)
-        t.equal('contact search', orchestrations[1].data)
+        t.equals(orchestrations[0].name, 'RapidPro Get Group UUID')
+        t.equals(orchestrations[1].name, 'RapidPro Fetch Contacts')
       }
 
+      server.close()
+      t.end()
+    })
+  })
+})
+ 
+tap.test('rapidpro.getContactsAsCSDEntities should group contacts by globalid', (t) => {
+  testServer.start(6700, testServer.testResponses.testRapidProResponse_multi, (server) => {
+    rapidpro.getContactsAsCSDEntities((err, results, orchestrations) => {
+      t.error(err)
+      t.ok(results)
+
+      if (results) {
+        t.equal(2, results.length)
+
+        // result[0] should contain a combine result
+        let doc = new Dom().parseFromString(results[0])
+        let names = xpath.select('/provider/demographic/name/commonName/text()', doc)
+        t.equal(names.length, 2)
+        t.equal(names[0].nodeValue, 'One Contact', 'First common name should be One Contact')
+        t.equal(names[1].nodeValue, 'Contact One', 'Second common name should be Contact One')
+
+        testEntityID(t, results[1], 'test-2')
+      }
+
+      server.close()
       t.end()
     })
   })
 })
 
-tap.test('rapidpro.buildContactsByGlobalIDMap should group contacts by globalid', (t) => {
-  let buildContactsByGlobalIDMap = rapidpro.__get__('buildContactsByGlobalIDMap')
-  let result = buildContactsByGlobalIDMap(testServer.testResponses.testRapidProResponse_multi.results)
-  t.ok(result)
-  t.ok(result['test-1'])
-  t.ok(result['test-2'])
-  t.equal(2, result['test-1'].length)
-  t.equal('86fe9d78-8c44-4815-ace7-5b4e0f5eadfb', result['test-1'][0].uuid)
-  t.equal('f3873a12-9e3d-485f-8d30-99fd221fc437', result['test-1'][1].uuid)
-  t.equal(1, result['test-2'].length)
-  t.equal('b1bddaa4-7461-4613-b35e-14a2eba7712d', result['test-2'][0].uuid)
-  t.end()
-})
-
 tap.test('rapidpro.convertContactToCSD should build a CSD provider string from a contact', (t) => {
-  let convertContactToCSD = rapidpro.__get__('convertContactToCSD')
-  let result = convertContactToCSD(mediatorConf, 'test-1', [testServer.testResponses.testRapidProResponse.results[0]])
+  let result = rapidpro.convertContactToCSD('test-1', [testServer.testResponses.testRapidProResponse.results[0]])
   let doc = new Dom().parseFromString(result)
 
   let entityID = xpath.select1('/provider/@entityID', doc)
@@ -317,8 +257,7 @@ tap.test('rapidpro.convertContactToCSD should build a CSD provider string from a
 })
 
 tap.test('rapidpro.convertContactToCSD should build a CSD provider string from multiple contacts', (t) => {
-  let convertContactToCSD = rapidpro.__get__('convertContactToCSD')
-  let result = convertContactToCSD(mediatorConf, 'test-1', [testServer.testResponses.testRapidProResponse_multi.results[0], testServer.testResponses.testRapidProResponse_multi.results[2]])
+  let result = rapidpro.convertContactToCSD('test-1', [testServer.testResponses.testRapidProResponse_multi.results[0], testServer.testResponses.testRapidProResponse_multi.results[2]])
   let doc = new Dom().parseFromString(result)
 
   let entityID = xpath.select1('/provider/@entityID', doc)
@@ -350,8 +289,7 @@ tap.test('rapidpro.convertContactToCSD should build a CSD provider string from m
 
 tap.test('rapidpro.addContact should add a contact', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse_addContactSuccess, 'POST', (server) => {
-    const addContact = rapidpro.__get__('addContact')
-    addContact(mediatorConf, {
+    rapidpro.addContact({
       name: 'Ben Haggerty',
       groups: [
         'Top 10 Artists'
@@ -371,8 +309,7 @@ tap.test('rapidpro.addContact should add a contact', (t) => {
 
 tap.test('rapidpro.addContact should produce an orchestration', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse_addContactSuccess, (server) => {
-    const addContact = rapidpro.__get__('addContact')
-    addContact(mediatorConf, {
+    rapidpro.addContact({
       name: 'Ben Haggerty',
       groups: [
         'Top 10 Artists'
@@ -392,8 +329,7 @@ tap.test('rapidpro.addContact should produce an orchestration', (t) => {
 
 tap.test('rapidpro.addContact should error when no body is returned', (t) => {
   testServer.start(6700, null, (server) => {
-    const addContact = rapidpro.__get__('addContact')
-    addContact(mediatorConf, {
+    rapidpro.addContact({
       name: 'Ben Haggerty',
       groups: [
         'Top 10 Artists'
@@ -412,8 +348,7 @@ tap.test('rapidpro.addContact should error when no body is returned', (t) => {
 
 tap.test('rapidpro.addContact should error when uuid is not set from RapidPro', (t) => {
   testServer.start(6700, {}, (server) => {
-    const addContact = rapidpro.__get__('addContact')
-    addContact(mediatorConf, {
+    rapidpro.addContact({
       name: 'Ben Haggerty',
       groups: [
         'Top 10 Artists'
@@ -431,8 +366,7 @@ tap.test('rapidpro.addContact should error when uuid is not set from RapidPro', 
 })
 
 tap.test('rapidpro.addContact should error when a request error occurs', (t) => {
-  const addContact = rapidpro.__get__('addContact')
-  addContact(mediatorConf, {
+  rapidpro.addContact({
     name: 'Ben Haggerty',
     groups: [
       'Top 10 Artists'
