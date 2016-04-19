@@ -125,8 +125,9 @@ function buildContactsByGlobalIDMap (contacts) {
 /**
  * convertContactToCSD - convert a RapidPro contact into CSD
  *
- * @param  {Object} config a RapidPro contact
+ * @param  {Object} config the dynamic mediator configuration
  * @param  {String} globalid the contact's globalid
+ * @param  {Array} contacts all rapidpro contacts that share the globalid
  * @return {String} the converted contact
  */
 function convertContactToCSD (config, globalid, contacts) {
