@@ -204,3 +204,45 @@ function getContactsAsCSDEntities (config, callback) {
 }
 
 exports.getContactsAsCSDEntities = getContactsAsCSDEntities
+
+/**
+ * addContact - Adds or updates a contact to RapidPro
+ *
+ * @param  {Object} config the mediator config conaining the RapidPro details
+ * @param  {Object} contact  The contact object to add
+ * @param  {Function} callback (err, contact, orchestrations)
+ */
+function addContact (config, contact, callback) {
+  let url = contactsURL(config.rapidpro.url)
+  let before = new Date()
+
+  let options = {
+    url: url,
+    headers: {
+      Authorization: `Token ${config.rapidpro.authtoken}`
+    },
+    body: contact,
+    json: true
+  }
+  console.log(`Adding/Updating contact via ${url}`)
+
+  request.post(options, (err, res, newContact) => {
+    if (err) {
+      callback(err)
+      return
+    }
+
+    let orchestrations = [utils.buildOrchestration('Add/Update RapidPro Contact', before, res, JSON.stringify(newContact))]
+
+    if (newContact) {
+      if (newContact.uuid) {
+        callback(null, newContact, orchestrations)
+      } else {
+        callback(new Error('No uuid set in contact, it probably didn\'t get saved in RapidPro'), newContact, orchestrations)
+      }
+    } else {
+      callback(new Error('No body returned, the contact probably didn\'t get saved in RapidPro'), null, orchestrations)
+    }
+  })
+}
+exports.addContact = addContact

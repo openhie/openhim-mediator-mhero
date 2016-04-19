@@ -152,16 +152,47 @@ const testRapidProResponse_noResults = {
   ]
 }
 
+const testRapidProResponse_addContactSuccess = {
+  uuid: '09d23a05-47fe-11e4-bfe9-b8f6b119e9ab',
+  name: 'Ben Haggerty',
+  groups: [
+    'Top 10 Artists'
+  ],
+  urns: [
+    'tel:+250788123123'
+  ],
+  blocked: false,
+  failed: false
+}
+
 exports.testResponses = {
   testRapidProResponse: testRapidProResponse,
   testRapidProResponse_noGlobalId: testRapidProResponse_noGlobalId,
   testRapidProResponse_multi: testRapidProResponse_multi,
   testRapidProResponse_groupSearch: testRapidProResponse_groupSearch,
-  testRapidProResponse_noResults: testRapidProResponse_noResults
+  testRapidProResponse_noResults: testRapidProResponse_noResults,
+  testRapidProResponse_addContactSuccess: testRapidProResponse_addContactSuccess
 }
 
-function start (port, responseDoc, callback) {
+/**
+ * start - Starts the test server
+ *
+ * @param  {Number} port        eg. 6700
+ * @param  {Object} responseDoc the doc to return
+ * @param  {String} method      (optional) eg. 'POST'
+ * @param  {Function} callback  (server) => {}
+ */
+function start (port, responseDoc, method, callback) {
+  if (typeof method === 'function') {
+    callback = method
+    method = undefined
+  }
+
   let server = http.createServer((req, res) => {
+    if (method && method !== req.method) {
+      res.writeHead(400)
+      res.end()
+    }
     res.end(JSON.stringify(responseDoc))
   })
   server.listen(port, () => callback(server))

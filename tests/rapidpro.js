@@ -347,3 +347,101 @@ tap.test('rapidpro.convertContactToCSD should build a CSD provider string from m
 
   t.end()
 })
+
+tap.test('rapidpro.addContact should add a contact', (t) => {
+  testServer.start(6700, testServer.testResponses.testRapidProResponse_addContactSuccess, 'POST', (server) => {
+    const addContact = rapidpro.__get__('addContact')
+    addContact(mediatorConf, {
+      name: 'Ben Haggerty',
+      groups: [
+        'Top 10 Artists'
+      ],
+      urns: [
+        'tel:+250788123123'
+      ]
+    }, (err, contact) => {
+      t.error(err, 'should not error')
+      t.ok(contact, 'should recieve the contact object back')
+      t.equals(contact.uuid, '09d23a05-47fe-11e4-bfe9-b8f6b119e9ab', 'contact should now have a uuid set')
+      server.close()
+      t.end()
+    })
+  })
+})
+
+tap.test('rapidpro.addContact should produce an orchestration', (t) => {
+  testServer.start(6700, testServer.testResponses.testRapidProResponse_addContactSuccess, (server) => {
+    const addContact = rapidpro.__get__('addContact')
+    addContact(mediatorConf, {
+      name: 'Ben Haggerty',
+      groups: [
+        'Top 10 Artists'
+      ],
+      urns: [
+        'tel:+250788123123'
+      ]
+    }, (err, contact, orchestrations) => {
+      t.error(err, 'should not error')
+      t.equals(orchestrations.length, 1, 'should return a single orchestration')
+      t.equals(orchestrations[0].name, 'Add/Update RapidPro Contact', 'should have the correct name')
+      server.close()
+      t.end()
+    })
+  })
+})
+
+tap.test('rapidpro.addContact should error when no body is returned', (t) => {
+  testServer.start(6700, null, (server) => {
+    const addContact = rapidpro.__get__('addContact')
+    addContact(mediatorConf, {
+      name: 'Ben Haggerty',
+      groups: [
+        'Top 10 Artists'
+      ],
+      urns: [
+        'tel:+250788123123'
+      ]
+    }, (err, contact) => {
+      t.ok(err, 'should error')
+      t.equal(err.message, 'No body returned, the contact probably didn\'t get saved in RapidPro', 'should produce the correct error')
+      server.close()
+      t.end()
+    })
+  })
+})
+
+tap.test('rapidpro.addContact should error when uuid is not set from RapidPro', (t) => {
+  testServer.start(6700, {}, (server) => {
+    const addContact = rapidpro.__get__('addContact')
+    addContact(mediatorConf, {
+      name: 'Ben Haggerty',
+      groups: [
+        'Top 10 Artists'
+      ],
+      urns: [
+        'tel:+250788123123'
+      ]
+    }, (err, contact) => {
+      t.ok(err, 'should error')
+      t.equal(err.message, 'No uuid set in contact, it probably didn\'t get saved in RapidPro', 'should produce the correct error')
+      server.close()
+      t.end()
+    })
+  })
+})
+
+tap.test('rapidpro.addContact should error when a request error occurs', (t) => {
+  const addContact = rapidpro.__get__('addContact')
+  addContact(mediatorConf, {
+    name: 'Ben Haggerty',
+    groups: [
+      'Top 10 Artists'
+    ],
+    urns: [
+      'tel:+250788123123'
+    ]
+  }, (err, contact) => {
+    t.ok(err, 'should return an error')
+    t.end()
+  })
+})
