@@ -3,11 +3,12 @@
 const Dom = require('xmldom').DOMParser
 const xpath = require('xpath')
 
-exports.buildOrchestration = (name, beforeTimestamp, res, body) => {
+exports.buildOrchestration = (name, beforeTimestamp, method, requestContent, res, body) => {
   return {
     name: name,
     request: {
-      method: 'GET',
+      method: method,
+      body: requestContent,
       timestamp: beforeTimestamp
     },
     response: {

@@ -47,7 +47,7 @@ function getGroupUUID (config, callback) {
       return
     }
 
-    let orchestrations = [utils.buildOrchestration(before, res, body)]
+    let orchestrations = [utils.buildOrchestration('RapidPro get group UUID', before, 'GET', null, res, body)]
 
     if (res.statusCode !== 200) {
       callback(new Error(`RapidPro responded with status ${res.statusCode}`), null, orchestrations)
@@ -88,7 +88,7 @@ function getContacts (config, groupUUID, callback) {
       return
     }
 
-    let orchestrations = [utils.buildOrchestration('RapidPro Fetch Contacts', before, res, body)]
+    let orchestrations = [utils.buildOrchestration('RapidPro Fetch Contacts', before, 'GET', null, res, body)]
 
     if (res.statusCode !== 200) {
       callback(`RapidPro responded with status ${res.statusCode}`, null, orchestrations)

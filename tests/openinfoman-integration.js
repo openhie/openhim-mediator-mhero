@@ -57,3 +57,68 @@ tap.test('openinfoman.fetchAllEntities should add return a single orchestration'
     })
   })
 })
+
+const testProviders = [
+  `<provider entityID="urn:uuid:20258004-a149-4225-975b-5f64b14910dc">
+    <demographic>
+      <name>
+        <commonName>Provider One</commonName>
+      </name>
+    </demographic>
+  </provider>`,
+  `<provider entityID="urn:uuid:5e971a37-bed4-4204-b662-ef8b4fcec5f2">
+    <demographic>
+      <name>
+        <commonName>Provider Two</commonName>
+      </name>
+    </demographic>
+  </provider>`
+]
+
+tap.test('openinfoman.loadProviderDirectory should add two orchestrations', (t) => {
+  csdServer.start(() => {
+    openinfoman.loadProviderDirectory(testProviders, (err, orchestrations) => {
+      t.error(err, 'should not error')
+      t.ok(orchestrations, 'orchestrations should be set')
+      t.equals(orchestrations.length, 2, 'there should only be two orchestrations')
+
+      t.equals(orchestrations[0].name, 'OpenInfoMan clear RapidPro directory')
+      t.ok(orchestrations[0].request)
+      t.equals('GET', orchestrations[0].request.method)
+      t.ok(orchestrations[0].response)
+      t.equal(200, orchestrations[0].response.status, 'response status should be captured correctly')
+
+      t.equals(orchestrations[1].name, 'OpenInfoMan load RapidPro directory')
+      t.ok(orchestrations[1].request)
+      t.equals('POST', orchestrations[1].request.method)
+      t.ok(orchestrations[1].response)
+      t.equal(200, orchestrations[1].response.status, 'response status should be captured correctly')
+
+      csdServer.stop(() => {
+        t.end()
+      })
+    })
+  })
+})
+
+tap.test('openinfoman.loadProviderDirectory should build a valid CSD update request', (t) => {
+  csdServer.start(() => {
+    openinfoman.loadProviderDirectory(testProviders, (err, orchestrations) => {
+      t.error(err, 'should not error')
+      t.ok(orchestrations, 'orchestrations should be set')
+      t.equals(orchestrations.length, 2, 'there should only be two orchestrations')
+
+      t.ok(orchestrations[1].request.body)
+
+      const doc = new Dom().parseFromString(orchestrations[1].request.body)
+      const select = xpath.useNamespaces({'csd': 'urn:ihe:iti:csd:2013'})
+      const providers = select('/csd:requestParams/csd:provider/@entityID', doc)
+      t.equals(providers[0].value, 'urn:uuid:20258004-a149-4225-975b-5f64b14910dc')
+      t.equals(providers[1].value, 'urn:uuid:5e971a37-bed4-4204-b662-ef8b4fcec5f2')
+
+      csdServer.stop(() => {
+        t.end()
+      })
+    })
+  })
+})

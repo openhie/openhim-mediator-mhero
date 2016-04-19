@@ -37,7 +37,59 @@ module.exports = function (cnf) {
         if (err) {
           return callback(err)
         }
-        callback(null, body, [utils.buildOrchestration('OpenInfoMan fetch all entities', before, res, body)])
+        callback(null, body, [utils.buildOrchestration('OpenInfoMan fetch all entities', before, 'GET', null, res, body)])
+      })
+    },
+
+    /**
+     * loadProviderDirectory - loads a complete provider directory into OpenInfoMan.
+     * Note that this will clear any existing data in the directory and then load the new contents.
+     *
+     * @param {Array} providers a string array containing the xml provider entities
+     * @param {Function} callback (err, orchestrations)
+     */
+    loadProviderDirectory: function (providers, callback) {
+      let orchestrations = []
+
+      let emptyDirectoryURI = new URI(config.url)
+        .segment('/CSD/emptyDirectory/')
+        .segment(config.rapidProDocument)
+
+      let before = new Date()
+      console.log(`Clearing directory via ${emptyDirectoryURI.toString()}`)
+
+      request.get(emptyDirectoryURI.toString(), (err, res, body) => {
+        if (err) {
+          return callback(err)
+        }
+        orchestrations.push(utils.buildOrchestration('OpenInfoMan clear RapidPro directory', before, 'GET', null, res, body))
+
+        let updateURI = new URI(config.url)
+          .segment('/CSD/csr/')
+          .segment(config.rapidProDocument)
+          .segment('/careServicesRequest/update/urn:openhie.org:openinfoman:provider_create')
+
+        var options = {
+          url: updateURI.toString(),
+          headers: {
+            'Content-Type': 'text/xml'
+          },
+          body: `<requestParams xmlns="urn:ihe:iti:csd:2013" xmlns:csd="urn:ihe:iti:csd:2013">
+            ${providers.join('\n')}
+          </requestParams>`
+        }
+
+        before = new Date()
+        console.log(`Loading directory contents via ${updateURI.toString()}`)
+
+        request.post(options, (err, res, body) => {
+          if (err) {
+            return callback(err)
+          }
+
+          orchestrations.push(utils.buildOrchestration('OpenInfoMan load RapidPro directory', before, 'POST', options.body, res, body))
+          callback(null, orchestrations)
+        })
       })
     }
   }

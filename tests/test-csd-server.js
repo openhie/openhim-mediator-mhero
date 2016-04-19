@@ -27,7 +27,11 @@ const server = http.createServer(function (req, res) {
     console.log(`Recieved ${req.method} request to ${req.url}`)
     console.log(`with body: ${body}`)
     res.writeHead(200)
-    res.end(response)
+    if (req.method === 'POST') {
+      res.end()
+    } else {
+      res.end(response)
+    }
   })
 })
 
