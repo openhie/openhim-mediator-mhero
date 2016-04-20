@@ -8,6 +8,7 @@ const xpath = require('xpath')
 
 const Openinfoman = require('./openinfoman')
 const RapidPro = require('./rapidpro')
+const RapidProCSDAdapter = require('./rapidproCSDAdapter.js')
 const utils = require('./utils')
 
 // Config
@@ -27,6 +28,7 @@ function setupApp () {
     let orchestrations = []
     const openinfoman = Openinfoman(config.openinfoman)
     const rapidpro = RapidPro(config.rapidpro)
+    const adapter = RapidProCSDAdapter(config)
 
     function reportFailure (err) {
       res.writeHead(500)
@@ -74,7 +76,7 @@ function setupApp () {
       })
 
       Promise.all(promises).then(() => {
-        rapidpro.getContactsAsCSDEntities((err, contacts, orchs) => {
+        adapter.getRapidProContactsAsCSDEntities((err, contacts, orchs) => {
           orchestrations = orchestrations.concat(orchs)
           if (err) {
             return reportFailure(err)

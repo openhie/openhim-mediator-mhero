@@ -10,8 +10,8 @@ const index = require('../index')
 const rapidProServer = require('./test-rapidpro-server')
 
 // don't log during tests - comment these out for debugging
-// console.log = () => {}
-// console.error = () => {}
+console.log = () => {}
+console.error = () => {}
 
 tap.test('full integration test', (t) => {
   csdServer.start(() => {
