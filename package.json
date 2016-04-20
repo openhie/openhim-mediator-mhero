@@ -27,6 +27,7 @@
   },
   "homepage": "https://github.com/jembi/openhim-mediator-mhero#readme",
   "dependencies": {
+    "express": "^4.13.4",
     "lodash": "^4.11.1",
     "openhim-mediator-utils": "^0.2.2",
     "request": "^2.71.0",
