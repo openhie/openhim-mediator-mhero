@@ -178,8 +178,8 @@ exports.testResponses = {
  * start - Starts the test server
  *
  * @param  {Number} port        eg. 6700
- * @param  {Object} responseDoc the doc to return on contact queries
- * @param  {Object} responseDoc the doc to return on group queries
+ * @param  {Object} responseDoc (optional) the doc to return on contact queries
+ * @param  {Object} groupDoc    (optional) the doc to return on group queries
  * @param  {String} method      (optional) eg. 'POST'
  * @param  {Function} callback  (server) => {}
  */
