@@ -5,7 +5,6 @@ const _ = require('lodash')
 const utils = require('./utils')
 
 module.exports = function (config) {
-
   const contactsURL = function (groupUUID) {
     let url = URI(config.url).segment('api/v1/contacts.json')
     if (groupUUID) {
@@ -39,7 +38,7 @@ module.exports = function (config) {
         return
       }
 
-      let orchestrations = [utils.buildOrchestration('RapidPro Get Group UUID', before, 'GET', null, res, body)]
+      let orchestrations = [utils.buildOrchestration('RapidPro Get Group UUID', before, 'GET', options.url, null, res, body)]
 
       if (res.statusCode !== 200) {
         callback(new Error(`RapidPro responded with status ${res.statusCode}`), null, orchestrations)
@@ -73,7 +72,7 @@ module.exports = function (config) {
         return
       }
 
-      let orchestrations = [utils.buildOrchestration('RapidPro Fetch Contacts', before, 'GET', null, res, body)]
+      let orchestrations = [utils.buildOrchestration('RapidPro Fetch Contacts', before, 'GET', options.url, null, res, body)]
 
       if (res.statusCode !== 200) {
         callback(`RapidPro responded with status ${res.statusCode}`, null, orchestrations)
@@ -231,7 +230,7 @@ module.exports = function (config) {
           return
         }
 
-        let orchestrations = [utils.buildOrchestration('Add/Update RapidPro Contact', before, 'GET', null, res, JSON.stringify(newContact))]
+        let orchestrations = [utils.buildOrchestration('Add/Update RapidPro Contact', before, 'POST', options.url, JSON.stringify(contact), res, JSON.stringify(newContact))]
 
         if (newContact) {
           if (newContact.uuid) {

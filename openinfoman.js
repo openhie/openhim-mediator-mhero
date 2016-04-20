@@ -37,7 +37,7 @@ module.exports = function (cnf) {
         if (err) {
           return callback(err)
         }
-        callback(null, body, [utils.buildOrchestration('OpenInfoMan fetch all entities', before, 'GET', null, res, body)])
+        callback(null, body, [utils.buildOrchestration('OpenInfoMan fetch all entities', before, 'POST', options.url, options.body, res, body)])
       })
     },
 
@@ -62,7 +62,7 @@ module.exports = function (cnf) {
         if (err) {
           return callback(err)
         }
-        orchestrations.push(utils.buildOrchestration('OpenInfoMan clear RapidPro directory', before, 'GET', null, res, body))
+        orchestrations.push(utils.buildOrchestration('OpenInfoMan clear RapidPro directory', before, 'GET', emptyDirectoryURI.toString(), null, res, body))
 
         let updateURI = new URI(config.url)
           .segment('/CSD/csr/')
@@ -87,7 +87,7 @@ module.exports = function (cnf) {
             return callback(err)
           }
 
-          orchestrations.push(utils.buildOrchestration('OpenInfoMan load RapidPro directory', before, 'POST', options.body, res, body))
+          orchestrations.push(utils.buildOrchestration('OpenInfoMan load RapidPro directory', before, 'POST', options.url, options.body, res, body))
           callback(null, orchestrations)
         })
       })

@@ -1,7 +1,6 @@
 'use strict'
 
 const tap = require('tap')
-const rewire = require('rewire')
 const xpath = require('xpath')
 const Dom = require('xmldom').DOMParser
 const testServer = require('./test-rapidpro-server')
@@ -118,7 +117,7 @@ let testEntityID = (t, xml, expected) => {
   let doc = new Dom().parseFromString(xml)
   let entityID = xpath.select1('/provider/@entityID', doc)
   t.ok(entityID.value)
-  t.equals(entityID.value, expected, `XML should contain a provider with entity ID`)
+  t.equals(entityID.value, expected, 'XML should contain a provider with entity ID')
 }
 
 tap.test('rapidpro.getContactsAsCSDEntities should fetch contacts and convert each entry', (t) => {
@@ -203,7 +202,7 @@ tap.test('rapidpro.getContactsAsCSDEntities should forward group search and cont
     })
   })
 })
- 
+
 tap.test('rapidpro.getContactsAsCSDEntities should group contacts by globalid', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse_multi, (server) => {
     rapidpro.getContactsAsCSDEntities((err, results, orchestrations) => {

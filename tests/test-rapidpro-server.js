@@ -203,8 +203,14 @@ function start (port, responseDoc, groupDoc, method, callback) {
       res.writeHead(400)
       res.end()
     }
-    if (groupDoc && req.url.indexOf('groups')>-1) {
+    if (groupDoc && req.url.indexOf('groups') > -1) {
       res.end(JSON.stringify(groupDoc))
+    } else if (responseDoc === 'dynamic') {
+      if (req.method === 'GET') {
+        res.end(JSON.stringify(testRapidProResponse))
+      } else if (req.method === 'POST') {
+        res.end(JSON.stringify(testRapidProResponse_addContactSuccess))
+      }
     } else {
       res.end(JSON.stringify(responseDoc))
     }
@@ -215,5 +221,5 @@ exports.start = start
 
 if (!module.parent) {
   // if this script is run directly, start the server
-  start(6700, testRapidProResponse, () => console.log('Mock RapidPro Server listening on 6700...'))
+  start(6700, 'dynamic', () => console.log('Mock RapidPro Server listening on 6700...'))
 }
