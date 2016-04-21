@@ -1,14 +1,38 @@
 {
   "urn": "urn:uuid:7078b8b7-16b9-48cd-b8ad-38be64733d73",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "name": "mHero sync",
   "description": "This mediator synchronises data between the mHero systems",
-  "defaultChannelConfig": [],
+  "defaultChannelConfig": [
+    {
+      "name": "AUTO - HWR and RapidPro Sync",
+      "urlPattern": "^/trigger$",
+      "pollingSchedule": "0 2 * * *",
+      "status": "enabled",
+      "routes": [
+        {
+          "name": "Activate HWR and RapidPro Sync",
+          "secured": false,
+          "host": "localhost",
+          "port": 8544,
+          "path": "/sync",
+          "primary": true,
+          "status": "enabled",
+          "type": "http"
+        }
+      ],
+      "authType": "private",
+      "allow": [
+        "sync"
+      ],
+      "type": "polling"
+    }
+  ],
   "endpoints": [
     {
-      "name": "ADX csd mapper mediator",
+      "name": "Activate HWR and RapidPro Sync",
       "host": "localhost",
-      "path": "",
+      "path": "/sync",
       "port": "8544",
       "primary": true,
       "type": "http"
@@ -16,28 +40,74 @@
   ],
   "configDefs": [
     {
-      "param": "upstream",
-      "displayName": "Upstream Server",
-      "description": "The upstream server to which modified requests should be sent.",
+      "param": "rapidpro",
+      "displayName": "RapidPro Server",
+      "description": "The RapidPro server to sync contacts with",
       "type": "struct",
       "template": [
         {
-          "param": "host",
-          "displayName": "Host",
+          "param": "url",
+          "displayName": "URL",
+          "description": "The base URL (e.g. https://rapidpro.io)",
           "type": "string"
         },
         {
-          "param": "port",
-          "displayName": "Port",
-          "type": "number"
+          "param": "slug",
+          "displayName": "Slug",
+          "description": "The unique identifying part of the assigning authority, this will be combined with the base URL",
+          "type": "string"
+        },
+        {
+          "param": "authtoken",
+          "displayName": "Authentication Token",
+          "description": "The authentication token for the RapidPro API",
+          "type": "string"
+        },
+        {
+          "param": "groupname",
+          "displayName": "Group Name",
+          "description": "Restricts searching for RapidPro contacts to only this group",
+          "type": "string"
+        }
+      ]
+    }, {
+      "param": "openinfoman",
+      "displayName": "OpenInfoMan Server",
+      "description": "The OpenInfoMan server to sync providers with",
+      "type": "struct",
+      "template": [
+        {
+          "param": "url",
+          "displayName": "URL",
+          "description": "The base URL (e.g. https://localhost:8984)",
+          "type": "string"
+        },
+        {
+          "param": "queryDocument",
+          "displayName": "Provider query document",
+          "description": "The CSD document to query providers from in order to send to RapidPro",
+          "type": "string"
+        },
+        {
+          "param": "rapidProDocument",
+          "displayName": "RapidPro contacts document",
+          "description": "The CSD document to store contacts retrieved from RapidPro",
+          "type": "string"
         }
       ]
     }
   ],
   "config": {
-    "upstream": {
-      "port":9999,
-      "host":"localhost"
+    "rapidpro": {
+      "url": "http://localhost:6700",
+      "slug": "http://localhost:6700",
+      "authtoken": "",
+      "groupname": ""
+    },
+    "openinfoman": {
+      "url": "http://localhost:8984",
+      "queryDocument": "Providers",
+      "rapidProDocument": "RapidProContacts"
     }
   }
 }

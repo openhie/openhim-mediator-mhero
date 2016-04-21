@@ -5,10 +5,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "standard && tap --cov --reporter=spec tests/unit.js tests/integration.js",
-    "cov": "standard && tap --cov --reporter=spec --coverage-report=lcov tests/unit.js tests/integration.js",
-    "test:unit": "tap --cov --reporter=spec tests/unit.js",
-    "test:integration": "tap --cov --reporter=spec tests/integration.js",
+    "test": "npm -s run test:code && npm -s run test:style",
+    "test:code": "tap --cov --reporter=spec tests/unit.js tests/integration.js tests/openinfoman-integration.js tests/rapidpro.js tests/rapidproCSDAdapter.js tests/utils.js",
+    "test:style": "standard -v | snazzy",
+    "cov": "npm run test:code -- --coverage-report=lcov",
     "test:watch": "onchange '**/*.js' -- npm test"
   },
   "repository": {
@@ -27,11 +27,18 @@
   },
   "homepage": "https://github.com/jembi/openhim-mediator-mhero#readme",
   "dependencies": {
-    "openhim-mediator-utils": "^0.2.2"
+    "express": "^4.13.4",
+    "lodash": "^4.11.1",
+    "openhim-mediator-utils": "^0.2.2",
+    "request": "^2.71.0",
+    "urijs": "^1.17.1",
+    "xmldom": "^0.1.22",
+    "xpath": "0.0.23"
   },
   "devDependencies": {
     "onchange": "^2.3.0",
     "rewire": "^2.5.1",
+    "snazzy": "^3.0.1",
     "standard": "^6.0.8",
     "tap": "^5.7.1"
   }

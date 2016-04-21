@@ -1,8 +1,15 @@
 #!/usr/bin/env node
 'use strict'
 
-const http = require('http')
-const utils = require('openhim-mediator-utils')
+const Dom = require('xmldom').DOMParser
+const express = require('express')
+const medUtils = require('openhim-mediator-utils')
+const xpath = require('xpath')
+
+const Openinfoman = require('./openinfoman')
+const RapidPro = require('./rapidpro')
+const RapidProCSDAdapter = require('./rapidproCSDAdapter.js')
+const utils = require('./utils')
 
 // Config
 var config = {} // this will vary depending on whats set in openhim-core
@@ -10,16 +17,93 @@ const apiConf = require('./config/config')
 const mediatorConfig = require('./config/mediator')
 
 /**
- * setupServer - configures the http server for this mediator
+ * setupApp - configures the http server for this mediator
  *
- * @return {http.Server}  the configured http server
+ * @return {express.App}  the configured http server
  */
-function setupServer () {
-  return http.createServer((req, res) => {
-    console.log('Current config is:', config)
-    res.writeHead(200)
-    res.end()
+function setupApp () {
+  const app = express()
+
+  app.get('/sync', (req, res) => {
+    let orchestrations = []
+    const openinfoman = Openinfoman(config.openinfoman)
+    const rapidpro = RapidPro(config.rapidpro)
+    const adapter = RapidProCSDAdapter(config)
+
+    function reportFailure (err) {
+      res.writeHead(500)
+      console.error(err.stack)
+      res.end(JSON.stringify({
+        'x-mediator-urn': mediatorConfig.urn,
+        status: 'Failed',
+        response: {
+          status: 500,
+          body: err.stack,
+          timestamp: new Date()
+        },
+        orchestrations: orchestrations
+      }))
+    }
+
+    openinfoman.fetchAllEntities((err, csdDoc, orchs) => {
+      orchestrations = orchestrations.concat(orchs)
+      if (err) {
+        return reportFailure(err)
+      }
+      if (!csdDoc) {
+        return reportFailure(new Error('No CSD document returned'))
+      }
+
+      // extract each CSD entity for processing
+      const doc = new Dom().parseFromString(csdDoc)
+      const select = xpath.useNamespaces({'csd': 'urn:ihe:iti:csd:2013'})
+      let entities = select('/csd:CSD/csd:providerDirectory/csd:provider', doc)
+      entities = entities.map((entity) => entity.toString())
+      const contacts = entities.map(utils.convertCSDToContact)
+
+      // Add all contacts to RapidPro
+      const promises = []
+      contacts.forEach((contact) => {
+        promises.push(new Promise((resolve, reject) => {
+          rapidpro.addContact(contact, (err, contact, orchs) => {
+            orchestrations = orchestrations.concat(orchs)
+            if (err) {
+              reject(err)
+            }
+            resolve()
+          })
+        }))
+      })
+
+      Promise.all(promises).then(() => {
+        adapter.getRapidProContactsAsCSDEntities((err, contacts, orchs) => {
+          orchestrations = orchestrations.concat(orchs)
+          if (err) {
+            return reportFailure(err)
+          }
+
+          openinfoman.loadProviderDirectory(contacts, (err, orchs) => {
+            orchestrations = orchestrations.concat(orchs)
+            if (err) {
+              return reportFailure(err)
+            }
+
+            res.writeHead(200, { 'Content-Type': 'application/json+openhim' })
+            res.end(JSON.stringify({
+              'x-mediator-urn': mediatorConfig.urn,
+              status: 'Successful',
+              response: {
+                status: 200,
+                timestamp: new Date()
+              },
+              orchestrations: orchestrations
+            }))
+          })
+        })
+      }, reportFailure)
+    })
   })
+  return app
 }
 
 /**
@@ -30,14 +114,14 @@ function setupServer () {
  */
 function start (callback) {
   if (apiConf.register) {
-    utils.registerMediator(apiConf.api, mediatorConfig, (err) => {
+    medUtils.registerMediator(apiConf.api, mediatorConfig, (err) => {
       if (err) {
         console.log('Failed to register this mediator, check your config')
         console.log(err.stack)
         process.exit(1)
       }
       apiConf.api.urn = mediatorConfig.urn
-      utils.fetchConfig(apiConf.api, (err, newConfig) => {
+      medUtils.fetchConfig(apiConf.api, (err, newConfig) => {
         console.log('Received initial config:')
         console.log(JSON.stringify(newConfig))
         config = newConfig
@@ -47,9 +131,9 @@ function start (callback) {
           process.exit(1)
         } else {
           console.log('Successfully registered mediator!')
-          let server = setupServer()
-          server.listen(8544, () => {
-            let configEmitter = utils.activateHeartbeat(apiConf.api)
+          let app = setupApp()
+          const server = app.listen(8544, () => {
+            let configEmitter = medUtils.activateHeartbeat(apiConf.api)
             configEmitter.on('config', (newConfig) => {
               console.log('Received updated config:')
               console.log(JSON.stringify(newConfig))
@@ -63,8 +147,8 @@ function start (callback) {
   } else {
     // default to config from mediator registration
     config = mediatorConfig.config
-    let server = setupServer()
-    server.listen(8544, () => callback(server))
+    let app = setupApp()
+    const server = app.listen(8544, () => callback(server))
   }
 }
 exports.start = start
