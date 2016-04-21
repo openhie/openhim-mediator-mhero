@@ -9,11 +9,28 @@ const response = `<CSD xmlns='urn:ihe:iti:csd:2013'>
                     <facilityDirectory>
                     </facilityDirectory>
                     <providerDirectory>
-                      <provider entityID='123'>
-                        <!-- POTENTIALLY LARGE AMOUNT OF CONTENT ON THE PROVIDER -->
+                      <provider entityID="urn:uuid:20258004-a149-4225-975b-5f64b14910dc">
+                        <demographic>
+                          <name>
+                            <commonName>Provider One</commonName>
+                          </name>
+                          <contactPoint>
+                            <codedType code="BP" codingScheme="urn:ihe:iti:csd:2013:contactPoint">555-777-1111</codedType>
+                          </contactPoint>
+                          <contactPoint>
+                            <codedType code="BP" codingScheme="urn:ihe:iti:csd:2013:contactPoint">555-777-2222</codedType>
+                          </contactPoint>
+                        </demographic>
                       </provider>
-                      <provider entityID='456'>
-                        <!-- POTENTIALLY LARGE AMOUNT OF CONTENT ON THE PROVIDER -->
+                      <provider entityID="urn:uuid:5e971a37-bed4-4204-b662-ef8b4fcec5f2">
+                        <demographic>
+                          <name>
+                            <commonName>Provider Two</commonName>
+                          </name>
+                          <contactPoint>
+                            <codedType code="BP" codingScheme="urn:ihe:iti:csd:2013:contactPoint">555-777-3333</codedType>
+                          </contactPoint>
+                        </demographic>
                       </provider>
                     </providerDirectory>
                   </CSD>`
@@ -27,11 +44,7 @@ const server = http.createServer(function (req, res) {
     console.log(`Recieved ${req.method} request to ${req.url}`)
     console.log(`with body: ${body}`)
     res.writeHead(200)
-    if (req.method === 'POST') {
-      res.end()
-    } else {
-      res.end(response)
-    }
+    res.end(response)
   })
 })
 

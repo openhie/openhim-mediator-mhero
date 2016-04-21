@@ -1,8 +1,6 @@
 'use strict'
 
 const tap = require('tap')
-const xpath = require('xpath')
-const Dom = require('xmldom').DOMParser
 const testServer = require('./test-rapidpro-server')
 
 const RapidPro = require('../rapidpro.js')

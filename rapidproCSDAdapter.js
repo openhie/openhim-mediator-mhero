@@ -3,7 +3,6 @@ const RapidPro = require('./rapidpro')
 const _ = require('lodash')
 
 module.exports = function (config) {
-
   const rapidpro = RapidPro(config.rapidpro)
 
   /**

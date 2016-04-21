@@ -4,7 +4,7 @@ const tap = require('tap')
 const utils = require('../utils.js')
 
 const csdProvider = `
-<provider xmlns="urn:ihe:iti:csd:2013" entityID="urn:uuid:a97b9397-ce4e-4a57-b12a-0d46ce6f36b7">
+<provider entityID="urn:uuid:a97b9397-ce4e-4a57-b12a-0d46ce6f36b7">
     <codedType code="105-007" codingScheme="1.3.6.1.4.1.21367.100.1">Physician/Medical Oncology</codedType>
     <demographic>
         <name>
@@ -25,7 +25,7 @@ const csdProvider = `
 `
 
 const csdProviderNoTel = `
-<provider xmlns="urn:ihe:iti:csd:2013" entityID="urn:uuid:a97b9397-ce4e-4a57-b12a-0d46ce6f36b7">
+<provider entityID="urn:uuid:a97b9397-ce4e-4a57-b12a-0d46ce6f36b7">
     <codedType code="105-007" codingScheme="1.3.6.1.4.1.21367.100.1">Physician/Medical Oncology</codedType>
     <demographic>
         <name>
@@ -40,7 +40,7 @@ const csdProviderNoTel = `
 `
 
 const csdProviderMultiName = `
-<provider xmlns="urn:ihe:iti:csd:2013" entityID="urn:uuid:a97b9397-ce4e-4a57-b12a-0d46ce6f36b7">
+<provider entityID="urn:uuid:a97b9397-ce4e-4a57-b12a-0d46ce6f36b7">
     <codedType code="105-007" codingScheme="1.3.6.1.4.1.21367.100.1">Physician/Medical Oncology</codedType>
     <demographic>
         <name>

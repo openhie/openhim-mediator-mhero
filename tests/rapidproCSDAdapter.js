@@ -5,14 +5,14 @@ const xpath = require('xpath')
 const Dom = require('xmldom').DOMParser
 const testServer = require('./test-rapidpro-server')
 
-const RapidProCSDAdapter = require('../rapidproCSDAdapter.js')
+const RapidProCSDAdapter = require('../rapidproCSDAdapter')
 
 // don't log during tests - comment these out for debugging
 console.log = () => {}
 console.error = () => {}
 
 const adapter = RapidProCSDAdapter({
-  rapidpro: { 
+  rapidpro: {
     url: 'http://localhost:6700',
     slug: 'http://localhost:6700',
     authtoken: '1234secret'
@@ -32,7 +32,7 @@ let testEntityID = (t, xml, expected) => {
   let doc = new Dom().parseFromString(xml)
   let entityID = xpath.select1('/provider/@entityID', doc)
   t.ok(entityID.value)
-  t.equals(entityID.value, expected, `XML should contain a provider with entity ID`)
+  t.equals(entityID.value, expected, 'XML should contain a provider with entity ID')
 }
 
 tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should fetch contacts and convert each entry', (t) => {
@@ -117,7 +117,7 @@ tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should forward group searc
     })
   })
 })
- 
+
 tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should group contacts by globalid', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse_multi, (server) => {
     adapter.getRapidProContactsAsCSDEntities((err, results, orchestrations) => {
