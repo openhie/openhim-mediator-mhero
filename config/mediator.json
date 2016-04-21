@@ -54,16 +54,19 @@
         {
           "param": "slug",
           "displayName": "Slug",
+          "description": "The unique identifying part of the assigning authority, this will be combined with the base URL",
           "type": "string"
         },
         {
           "param": "authtoken",
           "displayName": "Authentication Token",
+          "description": "The authentication token for the RapidPro API",
           "type": "string"
         },
         {
           "param": "groupname",
           "displayName": "Group Name",
+          "description": "Restricts searching for RapidPro contacts to only this group",
           "type": "string"
         }
       ]
