@@ -24,26 +24,10 @@ sudo sed -i -r 's/"username": ".*"/"username": "'$USER'"/' config/config.json
 sudo sed -i -r 's/"password": ".*"/"password": "'$PASSWD'"/' config/config.json
 sudo sed -i -r 's/"apiURL": ".*"/"apiURL": "'$HOST:$PORT'"/' config/config.json
 
-# sudo sed -i -r 's/server=.*/server="'$HOST:$PORT'"/' config/config.json
-# sudo sed -i -r 's/username=.*/username="'$USER'"/' config/config.json
-# sudo sed -i -r 's/pass=.*/pass="'$PASSWD'"/' config/config.json
-
 # inject server to mediator config
-sudo sed -i -r 's/root@openhim.org/'$USER'/' config/config.json
-sudo sed -i -r 's/password/'$PASSWD'/' config/config.json
-sudo sed -i -r 's/localhost:8080/'$HOST:$PORT'/' config/config.json
-
-# ./load-initial-data.sh data.json
-
-# sudo -u openhim /bin/bash /etc/openhim/install_node_4.sh
-
-# chown -R openhim:openhim /usr/share/openhim-mediator-file-queue
-# chown -R openhim:openhim /usr/share/openhim-mediator-datim
-# chown -R openhim:openhim /usr/share/openhim-mediator-mhero
+# sudo sed -i -r 's/root@openhim.org/'$USER'/' config/config.json
+# sudo sed -i -r 's/password/'$PASSWD'/' config/config.json
+# sudo sed -i -r 's/localhost:8080/'$HOST:$PORT'/' config/config.json
 
 stop openhim-mediator-mhero || true
-# stop openhim-mediator-datim || true
-# stop openhim-mediator-adx-csd-mapper || true
 start openhim-mediator-mhero || true
-# start openhim-mediator-datim || true
-# start openhim-mediator-adx-csd-mapper || true
