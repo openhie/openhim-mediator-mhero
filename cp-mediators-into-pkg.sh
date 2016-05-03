@@ -1,0 +1,19 @@
+#!/bin/bash
+set -e
+
+SRCDIR="/home/martin/git"
+
+mkdir -p targets/trusty/usr/share
+rm -rf targets/trusty/usr/share/*
+
+echo "Cloning base mediators..."
+git clone https://github.com/jembi/openhim-mediator-mhero.git targets/trusty/usr/share/openhim-mediator-mhero
+echo "Done."
+
+# echo "Configuring mediators..."
+# cp -r mediator-config/openhim-mediator-datim/config targets/trusty/usr/share/openhim-mediator-datim/
+# echo "Done."
+
+echo "Downloading module dependencies..."
+(cd targets/trusty/usr/share/openhim-mediator-mhero/ && npm install)
+echo "Done."

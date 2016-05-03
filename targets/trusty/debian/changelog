@@ -1,0 +1,71 @@
+openhim-mediator-mhero (0.1.0-11~trusty) trusty; urgency=medium
+
+  * Release Debian Build 0.1.0-11.
+
+ -- Martin Brocker <martin@jembi.org>  Tue, 03 May 2016 10:44:12 +0200
+
+openhim-mediator-mhero (0.1.0-10~trusty) trusty; urgency=medium
+
+  * Release Debian Build 0.1.0-10.
+
+ -- Martin Brocker <martin@jembi.org>  Tue, 03 May 2016 10:37:47 +0200
+
+openhim-mediator-mhero (0.1.0-9~trusty) trusty; urgency=medium
+
+  * Release Debian Build 0.1.0-9.
+
+ -- Martin Brocker <martin@jembi.org>  Tue, 03 May 2016 10:08:00 +0200
+
+openhim-mediator-mhero (0.1.0-8~trusty) trusty; urgency=medium
+
+  * Release Debian Build 0.1.0-8.
+
+ -- Martin Brocker <martin@jembi.org>  Tue, 03 May 2016 10:00:02 +0200
+
+openhim-mediator-mhero (0.1.0-7~trusty) trusty; urgency=medium
+
+  * Release Debian Build 0.1.0-7.
+
+ -- Martin Brocker <martin@jembi.org>  Tue, 03 May 2016 09:47:06 +0200
+
+openhim-mediator-mhero (0.1.0-6~trusty) trusty; urgency=medium
+
+  * Release Debian Build 0.1.0-6.
+
+ -- Martin Brocker <martin@jembi.org>  Tue, 03 May 2016 09:42:25 +0200
+
+openhim-mediator-mhero (0.1.0-5~trusty) trusty; urgency=medium
+
+  * Release Debian Build 0.1.0-5.
+
+ -- Martin Brocker <martin@jembi.org>  Tue, 03 May 2016 09:27:54 +0200
+
+openhim-mediator-mhero (0.1.0-4~trusty) trusty; urgency=medium
+
+  * Release Debian Build 0.1.0-4.
+
+ -- Martin Brocker <martin@jembi.org>  Tue, 03 May 2016 09:11:42 +0200
+
+openhim-mediator-mhero (0.1.0-3~trusty) trusty; urgency=medium
+
+  * Release Debian Build 0.1.0-3.
+
+ -- Martin Brocker <martin@jembi.org>  Fri, 29 Apr 2016 15:49:23 +0200
+
+openhim-mediator-mhero (0.1.0-2~trusty) trusty; urgency=medium
+
+  * Release Debian Build 0.1.0-2.
+
+ -- Martin Brocker <martin@jembi.org>  Fri, 29 Apr 2016 15:35:23 +0200
+
+openhim-mediator-mhero (0.1.0-1~trusty) trusty; urgency=medium
+
+  * Release Debian Build 0.1.0-1.
+
+ -- Martin Brocker <martin@jembi.org>  Fri, 29 Apr 2016 15:33:24 +0200
+
+openhim-mediator-mhero (0.1.0-1~trusty) trusty; urgency=low
+
+  * Initial build.
+
+ -- martin <martin@martinJembi>  Fri, 29 Apr 2016 14:47:46 +0200
