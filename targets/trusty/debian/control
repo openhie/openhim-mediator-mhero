@@ -9,7 +9,7 @@ Homepage: https://github.com/jembi/openhim-mediator-mhero
 
 Package: openhim-mediator-mhero
 Architecture: amd64
-Depends: openhim-core, nvm
+Depends: openhim-core-js
 Recommends:
 Description: OpenHIM mediator for mHero
  An mHero mediator for data synchronisation.
