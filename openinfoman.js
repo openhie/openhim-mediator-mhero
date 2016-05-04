@@ -20,6 +20,7 @@ module.exports = function (cnf) {
       let uri = new URI(config.url)
         .segment('/CSD/csr/')
         .segment(config.queryDocument)
+        .segment('careServicesRequest')
         .segment('/urn:ihe:iti:csd:2014:stored-function:provider-search')
 
       var options = {
