@@ -1,0 +1,24 @@
+Template: openhim-config/protocol
+Type: string
+Default: https
+Description: What is the protocol that the OpenHIM core server is running on?
+
+Template: openhim-config/host
+Type: string
+Default: localhost
+Description: What is the hostname that the OpenHIM core server is running on?
+
+Template: openhim-config/port
+Type: string
+Default: 8080
+Description: What is the port that the OpenHIM core server API is running on?
+
+Template: openhim-config/username
+Type: string
+Default: root@openhim.org
+Description: What is your OpenHIM username?
+
+Template: openhim-config/password
+Type: password
+Default: openhim-password
+Description: What is your OpenHIM password?

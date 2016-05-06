@@ -1,0 +1,11 @@
+Package: openhim-mediator-mhero
+Version: 0.1.0-4~trusty
+Architecture: amd64
+Maintainer: Martin Brocker <martin@jembi.org>
+Installed-Size: 31035
+Depends: openhim-core-js
+Section: web
+Priority: optional
+Homepage: https://github.com/jembi/openhim-mediator-mhero
+Description: OpenHIM mediator for mHero
+ An mHero mediator for data synchronisation.

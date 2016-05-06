@@ -46,4 +46,15 @@ This mediator consists of 3 main modules and an entry point that ties all these 
 * `rapidproCSDAdapter.js` - is a module that helps adapt from RapidPro contacts to CSD entities and vice versa.
 * `index.js` - this is the mediator entry point and it links the above modules together to the mHero synchronisation workflow.
 
+**Packaging**
+
+To build a new debian package execute the below shell script
+
+```
+cd packaging
+./create-deb.sh
+```
+
+You will be asked if you wish to download the latest code from the repository as well as uploading it to launchpad.
+
 (tra-la-la?)
