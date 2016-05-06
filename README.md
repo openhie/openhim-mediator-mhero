@@ -10,9 +10,15 @@ In particular, it pulls providers from an OpenInfoMan server and pushes those pr
 Getting started guide
 ---------------------
 
-Clone this mediator and edit `config/config.json` with your OpenHIM server details.
+The easiest way to install this mediator is to use the debian package which will install the OpenHIM-core as well as the medaitor.
 
-To run this mediator, execute: `npm install` then, `npm start` (add `NODE_TLS_REJECT_UNAUTHORIZED=0` before that command if your OpenHIM-core is running a self signed cert).
+```sh
+$ sudo add-apt-repository ppa:openhie/release
+$ sudo apt-get update
+$ sudo apt-get install openhim-mediator-mhero openhim-console
+```
+
+**Note**: If you change the root@openhim.org password (e.g. on first login) __after__ installing the mediator then the mediator config has to be changed here to reflect that: `/usr/share/openhim-mediator-mhero/config/config.json`
 
 When the mediator starts, it registers itself with the OpenHIM-core. Once, this is done you may configure the mediator directly from the OpenHIM-console. Here you will need to setup the following:
 
@@ -27,6 +33,30 @@ When the mediator starts, it registers itself with the OpenHIM-core. Once, this 
   * RapidPro contacts document - The CSD document to store contacts retrieved from RapidPro
 
 The mediator will automatically install a default polling channel that will run the synchronisation at 2am everyday. Edit the channel to suit your needs.
+
+You will also need to setup one of more polling channels to trigger data to be cached to the OpenInfoMan from other Provider Directories. For example if you wish to trigger the OpenHIM to trigger a sync from iHRIS, you could setup a channel with the following details. Note, you will need to have a remote service registered within the OpenInfoMan already.
+
+* Basic Info
+  * Name: 'AUTO - trigger cache update - iHRIS'
+  * URL Pattern: /ihris-cache
+  * Type: polling
+  * Schedule: 30 01 * * *
+* Access control
+  * Allowed roles and clients: 'polling'
+* Routes
+  * Add new Routes
+    * Name: 'iHRIS cache trigger'
+    * Host and port: the host and port of your OpenInfoMan server
+    * Route Path: e.g. /CSD/pollService/directory/<your_document>/update_cache
+
+This will now trigger a cache update of the document from iHRIS every night at 1:30am.
+
+Manual installation
+-------------------
+
+Clone this mediator and edit `config/config.json` with your OpenHIM server details.
+
+To run this mediator, execute: `npm install` then, `npm start` (add `NODE_TLS_REJECT_UNAUTHORIZED=0` before that command if your OpenHIM-core is running a self signed cert).
 
 Dev guide
 ---------
@@ -45,5 +75,16 @@ This mediator consists of 3 main modules and an entry point that ties all these 
 * `openinfoman.js` - is a module that controls communication with an OpenInfoMan Server.
 * `rapidproCSDAdapter.js` - is a module that helps adapt from RapidPro contacts to CSD entities and vice versa.
 * `index.js` - this is the mediator entry point and it links the above modules together to the mHero synchronisation workflow.
+
+**Packaging**
+
+To build a new debian package execute the below shell script
+
+```
+cd packaging
+./create-deb.sh
+```
+
+You will be asked if you wish to download the latest code from the repository as well as uploading it to launchpad.
 
 (tra-la-la?)

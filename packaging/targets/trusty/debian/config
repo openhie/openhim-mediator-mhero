@@ -1,0 +1,11 @@
+#!/bin/bash
+
+. /usr/share/debconf/confmodule 
+
+db_input critical openhim-config/protocol || true
+db_input critical openhim-config/host || true
+db_input critical openhim-config/port || true
+db_input critical openhim-config/username || true
+db_input critical openhim-config/password || true
+
+db_go || true

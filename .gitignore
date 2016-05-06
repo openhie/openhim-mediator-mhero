@@ -2,3 +2,6 @@ node_modules
 *.log
 .nyc_output
 coverage
+packaging/builds
+.vagrant
+packaging/targets/trusty/usr/*
