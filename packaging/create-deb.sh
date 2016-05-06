@@ -2,7 +2,7 @@
 # Exit on error
 set -e
 
-echo -n "Would you like to download the files again? [y/N] "
+echo -n "Would you like to (re)download the latest mediator source from master for use in this package? [y/N] "
 read UPLOAD
 if [[ "$UPLOAD" == "y" || "$UPLOAD" == "Y" ]];  then
     source cp-mediators-into-pkg.sh
