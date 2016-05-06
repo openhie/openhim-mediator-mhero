@@ -59,7 +59,13 @@ function setupApp () {
       const select = xpath.useNamespaces({'csd': 'urn:ihe:iti:csd:2013'})
       let entities = select('/csd:CSD/csd:providerDirectory/csd:provider', doc)
       entities = entities.map((entity) => entity.toString())
-      const contacts = entities.map(utils.convertCSDToContact)
+      const contacts = entities.map((entity) => {
+        try {
+          utils.convertCSDToContact(entity)
+        } catch (err) {
+          console.warn('Warning: ' + err.message)
+        }
+      })
 
       // Add all contacts to RapidPro
       const promises = []
