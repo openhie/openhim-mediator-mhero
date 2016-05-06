@@ -5,3 +5,4 @@ coverage
 packaging/builds
 .vagrant
 packaging/targets/trusty/usr/*
+.gnupg

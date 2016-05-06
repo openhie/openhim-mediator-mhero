@@ -21,7 +21,7 @@ cd $HOME
 echo $HOME
 
 PKG=openhim-mediator-mhero
-PKGVER=0.1.0
+PKGVER=0.2.0
 
 echo -n "Would you like to upload the build(s) to Launchpad? [y/N] "
 read UPLOAD
@@ -84,7 +84,7 @@ do
       CHANGES=${BUILDDIR}/${BUILD}_source.changes
     	DPKGCMD="dpkg-buildpackage -k${DEB_SIGN_KEYID} -S -sa "
     	$DPKGCMD
-    	DPUTCMD="dput ppa-sftp:$LAUNCHPADPPALOGIN/$PPA $CHANGES"
+    	DPUTCMD="dput ppa:$LAUNCHPADPPALOGIN/$PPA $CHANGES"
     	$DPUTCMD
     else
     	echo "Not uploading to launchpad"

@@ -1,3 +1,9 @@
+openhim-mediator-mhero (0.2.0-1~trusty) trusty; urgency=medium
+
+  * Release Debian Build 0.2.0-1.
+
+ -- Martin Brocker <martin@jembi.org>  Fri, 06 May 2016 11:09:05 +0200
+
 openhim-mediator-mhero (0.1.0-0~trusty) trusty; urgency=low
 
   * Initial build.

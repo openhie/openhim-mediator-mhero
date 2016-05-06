@@ -77,7 +77,7 @@ Vagrant.configure(2) do |config|
     echo "openhim-mediator-mhero openhim-config/username string root@openhim.org" | debconf-set-selections
     echo "openhim-mediator-mhero openhim-config/password password openhim-password" | debconf-set-selections
     echo "openhim-mediator-mhero openhim-config/protocol string https" | debconf-set-selections
-    sudo apt-get install -y openhim-core-js openhim-console
-    sudo dpkg -i /vagrant/packaging/builds/openhim-mediator-mhero_*.deb
+    # sudo apt-get install -y openhim-core-js openhim-console
+    # sudo dpkg -i /vagrant/packaging/builds/openhim-mediator-mhero_*.deb
   SHELL
 end
