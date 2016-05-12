@@ -72,7 +72,7 @@ module.exports = function (config) {
      *
      * @param {Function} callback (err, contacts, orchestrations)
      */
-    getRapidProContactsAsCSDEntities: function (callback) {
+    getRapidProContactsAsCSDEntities: function (groupUUID, callback) {
       let getContactsCallback = (_orchestrations) => (err, contacts, orchestrations) => {
         if (err) {
           callback(err, null, _orchestrations)
@@ -88,21 +88,7 @@ module.exports = function (config) {
         }
       }
 
-      if (config.rapidpro.groupname) {
-        rapidpro.getGroupUUID((err, groupUUID, orchestrations) => {
-          if (err) {
-            callback(err)
-          } else {
-            if (groupUUID) {
-              rapidpro.getContacts(groupUUID, getContactsCallback(orchestrations))
-            } else {
-              callback(new Error(`Configured group name '${config.rapidpro.groupname}' could not be resolved`), null, orchestrations)
-            }
-          }
-        })
-      } else {
-        rapidpro.getContacts(null, getContactsCallback([]))
-      }
+      rapidpro.getContacts(groupUUID, getContactsCallback([]))
     }
   }
 }

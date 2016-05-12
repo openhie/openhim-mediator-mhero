@@ -66,7 +66,7 @@
         {
           "param": "groupname",
           "displayName": "Group Name",
-          "description": "Restricts searching for RapidPro contacts to only this group",
+          "description": "Restricts adding and searching for RapidPro contacts to only this group",
           "type": "string"
         }
       ]

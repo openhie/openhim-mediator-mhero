@@ -37,7 +37,7 @@ let testEntityID = (t, xml, expected) => {
 
 tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should fetch contacts and convert each entry', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse, (server) => {
-    adapter.getRapidProContactsAsCSDEntities((err, results, orchestrations) => {
+    adapter.getRapidProContactsAsCSDEntities(null, (err, results, orchestrations) => {
       t.error(err)
       t.ok(results)
 
@@ -56,7 +56,7 @@ tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should fetch contacts and 
 
 tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should forward the orchestrations setup by getContacts', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse, (server) => {
-    adapter.getRapidProContactsAsCSDEntities((err, results, orchestrations) => {
+    adapter.getRapidProContactsAsCSDEntities(null, (err, results, orchestrations) => {
       t.error(err)
       t.ok(orchestrations)
 
@@ -74,7 +74,7 @@ tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should forward the orchest
 
 tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should filter by groupname', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse, testServer.testRapidProResponse_groupSearch, (server) => {
-    adapter_withGroup.getRapidProContactsAsCSDEntities((err, results, orchestrations) => {
+    adapter_withGroup.getRapidProContactsAsCSDEntities('test', (err, results, orchestrations) => {
       t.error(err)
       t.ok(results)
 
@@ -90,26 +90,15 @@ tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should filter by groupname
   })
 })
 
-tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should return an error if groupname could not be resolved', (t) => {
-  testServer.start(6700, testServer.testResponses.testRapidProResponse, testServer.testResponses.testRapidProResponse_noResults, (server) => {
-    adapter_withGroup.getRapidProContactsAsCSDEntities((err, results, orchestrations) => {
-      t.ok(err)
-      server.close()
-      t.end()
-    })
-  })
-})
-
 tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should forward group search and contacts orchestrations', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse, testServer.testRapidProResponse_groupSearch, (server) => {
-    adapter_withGroup.getRapidProContactsAsCSDEntities((err, results, orchestrations) => {
+    adapter_withGroup.getRapidProContactsAsCSDEntities('test', (err, results, orchestrations) => {
       t.error(err)
       t.ok(orchestrations)
 
       if (orchestrations) {
-        t.equal(2, orchestrations.length)
-        t.equals(orchestrations[0].name, 'RapidPro Get Group UUID')
-        t.equals(orchestrations[1].name, 'RapidPro Fetch Contacts')
+        t.equal(1, orchestrations.length)
+        t.equals(orchestrations[0].name, 'RapidPro Fetch Contacts')
       }
 
       server.close()
@@ -120,7 +109,7 @@ tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should forward group searc
 
 tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should group contacts by globalid', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse_multi, (server) => {
-    adapter.getRapidProContactsAsCSDEntities((err, results, orchestrations) => {
+    adapter.getRapidProContactsAsCSDEntities('test', (err, results, orchestrations) => {
       t.error(err)
       t.ok(results)
 
