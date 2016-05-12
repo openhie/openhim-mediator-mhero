@@ -15,6 +15,13 @@ var config = {} // this will vary depending on whats set in openhim-core
 const apiConf = require('./config/config')
 const mediatorConfig = require('./config/mediator')
 
+// socket config - large documents can cause machine to max files open
+const https = require('https')
+const http = require('http')
+
+https.globalAgent.maxSockets = 50
+http.globalAgent.maxSockets = 50
+
 /**
  * setupApp - configures the http server for this mediator
  *
