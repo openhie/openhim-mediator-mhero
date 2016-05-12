@@ -69,7 +69,7 @@ tap.test('rapidpro.getContacts should add orchestrations', (t) => {
 
 tap.test('rapidpro.getGroupUUID should fetch a group', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse_groupSearch, (server) => {
-    rapidpro_withGroup.getGroupUUID((err, groupUUID, orchestrations) => {
+    rapidpro_withGroup.getGroupUUID('test', (err, groupUUID, orchestrations) => {
       t.error(err)
       t.ok(groupUUID)
 
@@ -85,7 +85,7 @@ tap.test('rapidpro.getGroupUUID should fetch a group', (t) => {
 
 tap.test('rapidpro.getGroupUUID should respond with null value if no results', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse_noResults, (server) => {
-    rapidpro_withGroup.getGroupUUID((err, groupUUID, orchestrations) => {
+    rapidpro_withGroup.getGroupUUID('test', (err, groupUUID, orchestrations) => {
       t.error(err)
       t.notOk(groupUUID)
       server.close()

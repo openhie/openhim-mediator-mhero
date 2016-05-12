@@ -37,7 +37,7 @@ let testEntityID = (t, xml, expected) => {
 
 tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should fetch contacts and convert each entry', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse, (server) => {
-    adapter.getRapidProContactsAsCSDEntities((err, results, orchestrations) => {
+    adapter.getRapidProContactsAsCSDEntities(null, (err, results, orchestrations) => {
       t.error(err)
       t.ok(results)
 
@@ -56,7 +56,7 @@ tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should fetch contacts and 
 
 tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should forward the orchestrations setup by getContacts', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse, (server) => {
-    adapter.getRapidProContactsAsCSDEntities((err, results, orchestrations) => {
+    adapter.getRapidProContactsAsCSDEntities(null, (err, results, orchestrations) => {
       t.error(err)
       t.ok(orchestrations)
 
@@ -74,7 +74,7 @@ tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should forward the orchest
 
 tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should filter by groupname', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse, testServer.testRapidProResponse_groupSearch, (server) => {
-    adapter_withGroup.getRapidProContactsAsCSDEntities((err, results, orchestrations) => {
+    adapter_withGroup.getRapidProContactsAsCSDEntities('test', (err, results, orchestrations) => {
       t.error(err)
       t.ok(results)
 
@@ -90,26 +90,15 @@ tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should filter by groupname
   })
 })
 
-tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should return an error if groupname could not be resolved', (t) => {
-  testServer.start(6700, testServer.testResponses.testRapidProResponse, testServer.testResponses.testRapidProResponse_noResults, (server) => {
-    adapter_withGroup.getRapidProContactsAsCSDEntities((err, results, orchestrations) => {
-      t.ok(err)
-      server.close()
-      t.end()
-    })
-  })
-})
-
 tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should forward group search and contacts orchestrations', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse, testServer.testRapidProResponse_groupSearch, (server) => {
-    adapter_withGroup.getRapidProContactsAsCSDEntities((err, results, orchestrations) => {
+    adapter_withGroup.getRapidProContactsAsCSDEntities('test', (err, results, orchestrations) => {
       t.error(err)
       t.ok(orchestrations)
 
       if (orchestrations) {
-        t.equal(2, orchestrations.length)
-        t.equals(orchestrations[0].name, 'RapidPro Get Group UUID')
-        t.equals(orchestrations[1].name, 'RapidPro Fetch Contacts')
+        t.equal(1, orchestrations.length)
+        t.equals(orchestrations[0].name, 'RapidPro Fetch Contacts')
       }
 
       server.close()
@@ -120,7 +109,7 @@ tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should forward group searc
 
 tap.test('rapidproCSDAdapter.getContactsAsCSDEntities should group contacts by globalid', (t) => {
   testServer.start(6700, testServer.testResponses.testRapidProResponse_multi, (server) => {
-    adapter.getRapidProContactsAsCSDEntities((err, results, orchestrations) => {
+    adapter.getRapidProContactsAsCSDEntities('test', (err, results, orchestrations) => {
       t.error(err)
       t.ok(results)
 
@@ -198,5 +187,99 @@ tap.test('rapidproCSDAdapter.convertContactToCSD should build a CSD provider str
   t.equal('27731234567', tel[0].nodeValue)
   t.equal('27732345678', tel[1].nodeValue)
 
+  t.end()
+})
+
+const csdProvider = `
+<provider entityID="urn:uuid:a97b9397-ce4e-4a57-b12a-0d46ce6f36b7">
+    <codedType code="105-007" codingScheme="1.3.6.1.4.1.21367.100.1">Physician/Medical Oncology</codedType>
+    <demographic>
+        <name>
+            <commonName>Banargee, Dev</commonName>
+            <honorific>Dr.</honorific>
+            <forename>Dev</forename>
+            <surname>Banerjee</surname>
+        </name>
+        <contactPoint>
+            <codedType code="BP" codingScheme="urn:ihe:iti:csd:2013:contactPoint">555-777-1111</codedType>
+        </contactPoint>
+        <contactPoint>
+            <codedType code="BP" codingScheme="urn:ihe:iti:csd:2013:contactPoint">555-777-2222</codedType>
+        </contactPoint>
+        <gender>M</gender>
+    </demographic>
+</provider>
+`
+
+const csdProviderNoTel = `
+<provider entityID="urn:uuid:a97b9397-ce4e-4a57-b12a-0d46ce6f36b7">
+    <codedType code="105-007" codingScheme="1.3.6.1.4.1.21367.100.1">Physician/Medical Oncology</codedType>
+    <demographic>
+        <name>
+            <commonName>Banargee, Dev</commonName>
+            <honorific>Dr.</honorific>
+            <forename>Dev</forename>
+            <surname>Banerjee</surname>
+        </name>
+        <gender>M</gender>
+    </demographic>
+</provider>
+`
+
+const csdProviderMultiName = `
+<provider entityID="urn:uuid:a97b9397-ce4e-4a57-b12a-0d46ce6f36b7">
+    <codedType code="105-007" codingScheme="1.3.6.1.4.1.21367.100.1">Physician/Medical Oncology</codedType>
+    <demographic>
+        <name>
+            <commonName>Banargee, Dev</commonName>
+            <commonName>Dev Banargee</commonName>
+            <honorific>Dr.</honorific>
+            <forename>Dev</forename>
+            <surname>Banerjee</surname>
+        </name>
+        <contactPoint>
+            <codedType code="BP" codingScheme="urn:ihe:iti:csd:2013:contactPoint">555-777-1111</codedType>
+        </contactPoint>
+        <contactPoint>
+            <codedType code="BP" codingScheme="urn:ihe:iti:csd:2013:contactPoint">555-777-2222</codedType>
+        </contactPoint>
+        <gender>M</gender>
+    </demographic>
+</provider>
+`
+
+tap.test('RapidProCSDAdapter.convertCSDToContact() should convert a valid csd entity', (t) => {
+  const actual = adapter.convertCSDToContact(csdProvider)
+  const expected = {
+    name: 'Banargee, Dev',
+    urns: [ 'tel:555-777-1111', 'tel:555-777-2222' ],
+    fields: {
+      globalid: 'urn:uuid:a97b9397-ce4e-4a57-b12a-0d46ce6f36b7'
+    }
+  }
+  t.same(actual, expected, 'contact should be the same as the expected value')
+  t.end()
+})
+
+tap.test('RapidProCSDAdapter.convertCSDToContact() should throw an error if some required data is missing', (t) => {
+  try {
+    adapter.convertCSDToContact(csdProviderNoTel)
+  } catch (e) {
+    t.ok(e, 'should throw an error')
+    t.equal(e.message, 'couldn\'t find a telephone number, this is a required field for a contact', 'should return a readable message')
+    t.end()
+  }
+})
+
+tap.test('RapidProCSDAdapter.convertCSDToContact() should choose the first common name if there are multiple', (t) => {
+  const actual = adapter.convertCSDToContact(csdProviderMultiName)
+  const expected = {
+    name: 'Banargee, Dev',
+    urns: [ 'tel:555-777-1111', 'tel:555-777-2222' ],
+    fields: {
+      globalid: 'urn:uuid:a97b9397-ce4e-4a57-b12a-0d46ce6f36b7'
+    }
+  }
+  t.same(actual, expected, 'contact should be the same as the expected value')
   t.end()
 })

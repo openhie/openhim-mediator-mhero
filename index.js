@@ -9,12 +9,18 @@ const xpath = require('xpath')
 const Openinfoman = require('./openinfoman')
 const RapidPro = require('./rapidpro')
 const RapidProCSDAdapter = require('./rapidproCSDAdapter.js')
-const utils = require('./utils')
 
 // Config
 var config = {} // this will vary depending on whats set in openhim-core
 const apiConf = require('./config/config')
 const mediatorConfig = require('./config/mediator')
+
+// socket config - large documents can cause machine to max files open
+const https = require('https')
+const http = require('http')
+
+https.globalAgent.maxSockets = 50
+http.globalAgent.maxSockets = 50
 
 /**
  * setupApp - configures the http server for this mediator
@@ -59,54 +65,78 @@ function setupApp () {
       const select = xpath.useNamespaces({'csd': 'urn:ihe:iti:csd:2013'})
       let entities = select('/csd:CSD/csd:providerDirectory/csd:provider', doc)
       entities = entities.map((entity) => entity.toString())
-      const contacts = entities.map((entity) => {
+      let contacts = entities.map((entity) => {
         try {
-          utils.convertCSDToContact(entity)
+          return adapter.convertCSDToContact(entity)
         } catch (err) {
           console.warn('Warning: ' + err.message)
         }
       })
 
-      // Add all contacts to RapidPro
-      const promises = []
-      contacts.forEach((contact) => {
-        promises.push(new Promise((resolve, reject) => {
-          rapidpro.addContact(contact, (err, contact, orchs) => {
+      new Promise((resolve, reject) => {
+        if (config.rapidpro.groupname) {
+          rapidpro.getGroupUUID(config.rapidpro.groupname, (err, groupUUID, orchs) => {
             orchestrations = orchestrations.concat(orchs)
             if (err) {
               reject(err)
             }
-            resolve()
+            resolve(groupUUID)
           })
-        }))
-      })
+        } else {
+          resolve(null)
+        }
+      }).then((groupUUID) => {
+        // add group to contacts
+        if (groupUUID) {
+          contacts = contacts.map((c) => {
+            c.group_uuids = [groupUUID]
+            return c
+          })
+        }
 
-      Promise.all(promises).then(() => {
-        adapter.getRapidProContactsAsCSDEntities((err, contacts, orchs) => {
-          orchestrations = orchestrations.concat(orchs)
-          if (err) {
-            return reportFailure(err)
-          }
+        // Add all contacts to RapidPro
+        const promises = []
+        contacts.forEach((contact) => {
+          promises.push(new Promise((resolve, reject) => {
+            rapidpro.addContact(contact, (err, contact, orchs) => {
+              orchestrations = orchestrations.concat(orchs)
+              if (err) {
+                reject(err)
+              }
+              resolve()
+            })
+          }))
+        })
 
-          openinfoman.loadProviderDirectory(contacts, (err, orchs) => {
+        Promise.all(promises).then(() => {
+          adapter.getRapidProContactsAsCSDEntities(groupUUID, (err, contacts, orchs) => {
             orchestrations = orchestrations.concat(orchs)
             if (err) {
               return reportFailure(err)
             }
 
-            res.writeHead(200, { 'Content-Type': 'application/json+openhim' })
-            res.end(JSON.stringify({
-              'x-mediator-urn': mediatorConfig.urn,
-              status: 'Successful',
-              response: {
-                status: 200,
-                timestamp: new Date()
-              },
-              orchestrations: orchestrations
-            }))
+            openinfoman.loadProviderDirectory(contacts, (err, orchs) => {
+              orchestrations = orchestrations.concat(orchs)
+              if (err) {
+                return reportFailure(err)
+              }
+
+              res.writeHead(200, { 'Content-Type': 'application/json+openhim' })
+              res.end(JSON.stringify({
+                'x-mediator-urn': mediatorConfig.urn,
+                status: 'Successful',
+                response: {
+                  status: 200,
+                  timestamp: new Date()
+                },
+                orchestrations: orchestrations
+              }))
+            })
           })
-        })
-      }, reportFailure)
+        }, reportFailure)
+      }, (err) => {
+        return reportFailure(err)
+      })
     })
   })
   return app

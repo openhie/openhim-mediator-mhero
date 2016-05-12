@@ -1,5 +1,7 @@
 'use strict'
+const Dom = require('xmldom').DOMParser
 const RapidPro = require('./rapidpro')
+const xpath = require('xpath')
 const _ = require('lodash')
 
 module.exports = function (config) {
@@ -72,7 +74,7 @@ module.exports = function (config) {
      *
      * @param {Function} callback (err, contacts, orchestrations)
      */
-    getRapidProContactsAsCSDEntities: function (callback) {
+    getRapidProContactsAsCSDEntities: function (groupUUID, callback) {
       let getContactsCallback = (_orchestrations) => (err, contacts, orchestrations) => {
         if (err) {
           callback(err, null, _orchestrations)
@@ -88,20 +90,35 @@ module.exports = function (config) {
         }
       }
 
-      if (config.rapidpro.groupname) {
-        rapidpro.getGroupUUID((err, groupUUID, orchestrations) => {
-          if (err) {
-            callback(err)
-          } else {
-            if (groupUUID) {
-              rapidpro.getContacts(groupUUID, getContactsCallback(orchestrations))
-            } else {
-              callback(new Error(`Configured group name '${config.rapidpro.groupname}' could not be resolved`), null, orchestrations)
-            }
-          }
-        })
-      } else {
-        rapidpro.getContacts(null, getContactsCallback([]))
+      rapidpro.getContacts(groupUUID, getContactsCallback([]))
+    },
+
+    /**
+     * convertCSDToContact - converts a CSD provider into a rapidPro contact
+     *
+     * @param  {String} entity An CSD XML representation of the provider
+     * @return {Object}        A javascript object representing the RapidPro contact
+     */
+    convertCSDToContact: function (entity) {
+      const doc = new Dom().parseFromString(entity)
+      const uuid = xpath.select('/provider/@entityID', doc)[0].value
+      const name = xpath.select('/provider/demographic/name/commonName/text()', doc)[0].toString()
+      const telNodes = xpath.select('/provider/demographic/contactPoint/codedType[@code="BP" and @codingScheme="urn:ihe:iti:csd:2013:contactPoint"]/text()', doc)
+      let tels = []
+      telNodes.forEach((telNode) => {
+        tels.push('tel:' + telNode.toString())
+      })
+
+      if (tels.length === 0) {
+        throw new Error('couldn\'t find a telephone number, this is a required field for a contact')
+      }
+
+      return {
+        name: name,
+        urns: tels,
+        fields: {
+          globalid: uuid
+        }
       }
     }
   }

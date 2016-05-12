@@ -16,10 +16,10 @@ module.exports = function (config) {
     return contact.fields && contact.fields.globalid
   }
 
-  const getGroupUUID = function (callback) {
+  const getGroupUUID = function (groupName, callback) {
     let url = URI(config.url)
       .segment('api/v1/groups.json')
-      .addQuery('name', config.groupname)
+      .addQuery('name', groupName)
       .toString()
     let before = new Date()
 
@@ -92,6 +92,7 @@ module.exports = function (config) {
     /**
      * getGroupUUID - query RapidPro for the UUID for the configured group name
      *
+     * @param {String} groupName - the name of the group whose uuid we want to fetch
      * @param {Function} callback (err, groupUUID, orchestrations)
      */
     getGroupUUID: getGroupUUID,
