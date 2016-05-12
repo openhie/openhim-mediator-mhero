@@ -27,6 +27,7 @@ exports.buildOrchestration = (name, beforeTimestamp, method, url, requestContent
 
 exports.convertCSDToContact = (entity) => {
   const doc = new Dom().parseFromString(entity)
+  const uuid = xpath.select('/provider/@entityID', doc)[0].value
   const name = xpath.select('/provider/demographic/name/commonName/text()', doc)[0].toString()
   const telNodes = xpath.select('/provider/demographic/contactPoint/codedType[@code="BP" and @codingScheme="urn:ihe:iti:csd:2013:contactPoint"]/text()', doc)
   let tels = []
@@ -40,6 +41,9 @@ exports.convertCSDToContact = (entity) => {
 
   return {
     name: name,
-    urns: tels
+    urns: tels,
+    fields: {
+      globalid: uuid
+    }
   }
 }

@@ -65,7 +65,10 @@ tap.test('utils.convertCSDToContact() should convert a valid csd entity', (t) =>
   const actual = utils.convertCSDToContact(csdProvider)
   const expected = {
     name: 'Banargee, Dev',
-    urns: [ 'tel:555-777-1111', 'tel:555-777-2222' ]
+    urns: [ 'tel:555-777-1111', 'tel:555-777-2222' ],
+    fields: {
+      globalid: 'urn:uuid:a97b9397-ce4e-4a57-b12a-0d46ce6f36b7'
+    }
   }
   t.same(actual, expected, 'contact should be the same as the expected value')
   t.end()
@@ -85,7 +88,10 @@ tap.test('utils.convertCSDToContact() should choose the first common name if the
   const actual = utils.convertCSDToContact(csdProviderMultiName)
   const expected = {
     name: 'Banargee, Dev',
-    urns: [ 'tel:555-777-1111', 'tel:555-777-2222' ]
+    urns: [ 'tel:555-777-1111', 'tel:555-777-2222' ],
+    fields: {
+      globalid: 'urn:uuid:a97b9397-ce4e-4a57-b12a-0d46ce6f36b7'
+    }
   }
   t.same(actual, expected, 'contact should be the same as the expected value')
   t.end()

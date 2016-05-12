@@ -61,7 +61,7 @@ function setupApp () {
       entities = entities.map((entity) => entity.toString())
       const contacts = entities.map((entity) => {
         try {
-          utils.convertCSDToContact(entity)
+          return utils.convertCSDToContact(entity)
         } catch (err) {
           console.warn('Warning: ' + err.message)
         }
