@@ -5,6 +5,8 @@ const tap = require('tap')
 
 const config = require('../config/config')
 config.register = false
+const mConfig = require('../config/mediator')
+mConfig.config.rapidpro.groupname = 'test'
 const csdServer = require('./test-csd-server')
 const index = require('../index')
 const rapidProServer = require('./test-rapidpro-server')

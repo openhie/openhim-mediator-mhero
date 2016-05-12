@@ -9,7 +9,6 @@ const xpath = require('xpath')
 const Openinfoman = require('./openinfoman')
 const RapidPro = require('./rapidpro')
 const RapidProCSDAdapter = require('./rapidproCSDAdapter.js')
-const utils = require('./utils')
 
 // Config
 var config = {} // this will vary depending on whats set in openhim-core
@@ -61,7 +60,7 @@ function setupApp () {
       entities = entities.map((entity) => entity.toString())
       let contacts = entities.map((entity) => {
         try {
-          return utils.convertCSDToContact(entity)
+          return adapter.convertCSDToContact(entity)
         } catch (err) {
           console.warn('Warning: ' + err.message)
         }
