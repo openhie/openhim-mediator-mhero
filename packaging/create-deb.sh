@@ -84,7 +84,7 @@ do
       CHANGES=${BUILDDIR}/${BUILD}_source.changes
     	DPKGCMD="dpkg-buildpackage -k${DEB_SIGN_KEYID} -S -sa "
     	$DPKGCMD
-    	DPUTCMD="dput ppa:$LAUNCHPADPPALOGIN/$PPA $CHANGES"
+    	DPUTCMD="dput ppa-sftp:$LAUNCHPADPPALOGIN/$PPA $CHANGES"
     	$DPUTCMD
     else
     	echo "Not uploading to launchpad"
