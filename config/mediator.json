@@ -29,7 +29,7 @@
     },
     {
       "name": "AUTO - trigger cache update - iHRIS",
-      "urlPattern": "^/trigger$",
+      "urlPattern": "^/ihris-cache$",
       "pollingSchedule": "30 01 * * *",
       "status": "enabled",
       "routes": [
