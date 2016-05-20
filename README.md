@@ -51,7 +51,7 @@ You will also need to setup one or more polling channels to trigger data to be c
 
 The mediator will automatically install a default polling channel that will trigger the cache update of a document from iHRIS at 1:30am every night. 
 
-Replace '<your_document>' with a user specified document, and edit the rest of the channel settings to suit your needs.
+Note, you will need to replace '<your_document>' with a user specified document, and edit the rest of the channel settings to suit your needs.
 
 
 Manual installation
