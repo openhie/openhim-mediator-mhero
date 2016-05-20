@@ -34,7 +34,7 @@ When the mediator starts, it registers itself with the OpenHIM-core. Once, this 
 
 The mediator will automatically install a default polling channel that will run the synchronisation at 2am everyday. Edit the channel to suit your needs.
 
-You will also need to setup one of more polling channels to trigger data to be cached to the OpenInfoMan from other Provider Directories. For example if you wish to trigger the OpenHIM to trigger a sync from iHRIS, you could setup a channel with the following details. Note, you will need to have a remote service registered within the OpenInfoMan already.
+You will also need to setup one or more polling channels to trigger data to be cached to the OpenInfoMan from other Provider Directories. For example if you wish to trigger the OpenHIM to trigger a sync from iHRIS, you could setup a channel with the following details. Note, you will need to have a remote service registered within the OpenInfoMan already.
 
 * Basic Info
   * Name: 'AUTO - trigger cache update - iHRIS'
@@ -47,9 +47,12 @@ You will also need to setup one of more polling channels to trigger data to be c
   * Add new Routes
     * Name: 'iHRIS cache trigger'
     * Host and port: the host and port of your OpenInfoMan server
-    * Route Path: e.g. /CSD/pollService/directory/<your_document>/update_cache
+    * Route Path: /CSD/pollService/directory/<your_document>/update_cache
 
-This will now trigger a cache update of the document from iHRIS every night at 1:30am.
+The mediator will automatically install a default polling channel that will trigger the cache update of a document from iHRIS at 1:30am every night. 
+
+Note, you will need to replace '<your_document>' with a user specified document, and edit the rest of the channel settings to suit your needs.
+
 
 Manual installation
 -------------------

@@ -26,6 +26,29 @@
         "sync"
       ],
       "type": "polling"
+    },
+    {
+      "name": "AUTO - trigger cache update - iHRIS",
+      "urlPattern": "^/CSD/pollService/directory/.*/update_cache$",
+      "pollingSchedule": "30 01 * * *",
+      "status": "enabled",
+      "routes": [
+        {
+          "name": "iHRIS cache trigger",
+          "secured": false,
+          "host": "localhost",
+          "port": 8984,
+          "path": "/CSD/pollService/directory/<your_document>/update_cache",
+          "primary": true,
+          "status": "enabled",
+          "type": "http"
+        }
+      ],
+      "authType": "private",
+      "allow": [
+        "polling_cache"
+      ],
+      "type": "polling"
     }
   ],
   "endpoints": [
