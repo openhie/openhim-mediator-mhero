@@ -47,11 +47,11 @@ You will also need to setup one or more polling channels to trigger data to be c
   * Add new Routes
     * Name: 'iHRIS cache trigger'
     * Host and port: the host and port of your OpenInfoMan server
-    * Route Path: /CSD/pollService/directory/<your_document>/update_cache
+    * Route Path: /CSD/pollService/directory/your_document/update_cache
 
 The mediator will automatically install a default polling channel that will trigger the cache update of a document from iHRIS at 1:30am every night. 
 
-Note, you will need to replace '<your_document>' with a user specified document, and edit the rest of the channel settings to suit your needs.
+Note, you will need to replace `your_document` with a user specified document, and edit the rest of the channel settings to suit your needs.
 
 
 Manual installation
