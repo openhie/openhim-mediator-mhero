@@ -20,7 +20,7 @@ $ sudo apt-get install openhim-mediator-mhero openhim-console
 
 **Note**: If you change the root@openhim.org password (e.g. on first login) __after__ installing the mediator then the mediator config has to be changed here to reflect that: `/usr/share/openhim-mediator-mhero/config/config.json`
 
-When the mediator starts, it registers itself with the OpenHIM-core. Once, this is done you may configure the mediator directly from the OpenHIM-console. Here you will need to setup the following:
+When the mediator starts, it registers itself with the OpenHIM-core. Once, this is done you may configure the mediator directly from the OpenHIM-console by going to Mediator > mHero Mediator. Here you will need to setup the following:
 
 * RapidPro Server
   * URL - The base URL of the RapidPro server
@@ -32,27 +32,11 @@ When the mediator starts, it registers itself with the OpenHIM-core. Once, this 
   * Provider query document - The CSD document to query providers from in order to send to RapidPro
   * RapidPro contacts document - The CSD document to store contacts retrieved from RapidPro
 
-The mediator will automatically install a default polling channel that will run the synchronisation at 2am everyday. Edit the channel to suit your needs.
+The mediator will automatically install 3 polling channels to control the synchronisation, you must also configure these channels to suit your needs. In later versions of the OpenHIM (after 1.5.1) these will not be installed automatically, you will need to manually install these channels by navigating to Mediators > mHero Mediator and clikcing the little + button next to each channel listed under the 'Default channels' section. The channels are as follows:
 
-You will also need to setup one or more polling channels to trigger data to be cached to the OpenInfoMan from other Provider Directories. For example if you wish to trigger the OpenHIM to trigger a sync from iHRIS, you could setup a channel with the following details. Note, you will need to have a remote service registered within the OpenInfoMan already.
-
-* Basic Info
-  * Name: 'AUTO - trigger cache update - iHRIS'
-  * URL Pattern: /ihris-cache
-  * Type: polling
-  * Schedule: 30 01 * * *
-* Access control
-  * Allowed roles and clients: 'polling'
-* Routes
-  * Add new Routes
-    * Name: 'iHRIS cache trigger'
-    * Host and port: the host and port of your OpenInfoMan server
-    * Route Path: /CSD/pollService/directory/your_document/update_cache
-
-The mediator will automatically install a default polling channel that will trigger the cache update of a document from iHRIS at 1:30am every night. 
-
-Note, you will need to replace `your_document` with a user specified document, and edit the rest of the channel settings to suit your needs.
-
+* `AUTO - HWR and RapidPro Sync` - This channel will kick off the mediator to perform the the HWR to RapidPro synchronisation at 2am and 2pm everyday. You may edit the channel to change the schedule to suit your needs.
+* `AUTO - trigger cache update in iHRIS` - This channel runs everyday at 1am and 1pm by default. This channel updates iHRIS's CSD documents so that they are ready to be queried. You will need to configure the iHRIS endpoint for this to work. Edit this channel then go to 'routes' and add the correct url, hostname and port for your iHRIS instance.
+* `AUTO - update OpenInfoMan from iHRIS` - This channel runs everyday at 1:30am and 1:30pm. This channel updates the OpenInfoMan's cache of the iHRIS's Health Worker CSD document. You will need to configure the correcct OpenInfoMan document to fetch and ensure that the openInfoMan url is correct. Edit this channel then go to 'routes' and add the correct url, hostname and port for your OpenInfoMan instance. Replace `your_document` with the name of the health workers document in the url.
 
 Manual installation
 -------------------
