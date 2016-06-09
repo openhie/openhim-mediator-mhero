@@ -5,8 +5,8 @@
   "description": "This mediator synchronises data between the mHero systems",
   "defaultChannelConfig": [
     {
-      "name": "AUTO - HWR and RapidPro Sync",
-      "urlPattern": "^/trigger$",
+      "name": "AUTO - mHero - HWR and RapidPro Sync",
+      "urlPattern": "^/mhero-hwr-rapidpro-sync$",
       "pollingSchedule": "15 07,13 * * *",
       "status": "enabled",
       "routes": [
@@ -23,13 +23,13 @@
       ],
       "authType": "private",
       "allow": [
-        "sync"
+        "mhero-sync"
       ],
       "type": "polling"
     },
     {
-      "name": "AUTO - update OpenInfoMan from iHRIS",
-      "urlPattern": "^/CSD/pollService/directory/.*/update_cache$",
+      "name": "AUTO - mHero - update OpenInfoMan from iHRIS",
+      "urlPattern": "^/mhero-update-openinfoman-ihris-document$",
       "pollingSchedule": "00 07,13 * * *",
       "status": "enabled",
       "routes": [
@@ -46,13 +46,13 @@
       ],
       "authType": "private",
       "allow": [
-        "sync"
+        "mhero-sync"
       ],
       "type": "polling"
     },
     {
-      "name": "AUTO - trigger cache update in iHRIS",
-      "urlPattern": "^/trigger-update$",
+      "name": "AUTO - mHero - trigger cache update in iHRIS",
+      "urlPattern": "^/mhero-update-ihris-csd-caches$",
       "pollingSchedule": "30 06,12 * * *",
       "status": "enabled",
       "routes": [
@@ -69,7 +69,7 @@
       ],
       "authType": "private",
       "allow": [
-        "sync"
+        "mhero-sync"
       ],
       "type": "polling"
     }
