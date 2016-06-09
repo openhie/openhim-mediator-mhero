@@ -19,8 +19,8 @@ const mediatorConfig = require('./config/mediator')
 const https = require('https')
 const http = require('http')
 
-https.globalAgent.maxSockets = 50
-http.globalAgent.maxSockets = 50
+https.globalAgent.maxSockets = 5
+http.globalAgent.maxSockets = 5
 
 /**
  * setupApp - configures the http server for this mediator
