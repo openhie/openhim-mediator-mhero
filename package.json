@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "test": "npm -s run test:code && npm -s run test:style",
-    "test:code": "tap --cov --reporter=spec tests/unit.js tests/integration.js tests/openinfoman-integration.js tests/rapidpro.js tests/rapidproCSDAdapter.js tests/utils.js",
+    "test:code": "tap --cov --reporter=spec tests/unit.js tests/integration.js tests/openinfoman-integration.js tests/rapidpro.js tests/rapidproCSDAdapter.js tests/openhim.js",
     "test:style": "standard -v | snazzy",
     "cov": "npm run test:code -- --coverage-report=lcov",
     "test:watch": "onchange '**/*.js' -- npm test"

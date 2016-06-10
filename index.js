@@ -8,7 +8,8 @@ const xpath = require('xpath')
 
 const Openinfoman = require('./openinfoman')
 const RapidPro = require('./rapidpro')
-const RapidProCSDAdapter = require('./rapidproCSDAdapter.js')
+const RapidProCSDAdapter = require('./rapidproCSDAdapter')
+const OpenHIM = require('./openhim')
 
 // Config
 var config = {} // this will vary depending on whats set in openhim-core
@@ -173,7 +174,18 @@ function start (callback) {
             configEmitter.on('config', (newConfig) => {
               console.log('Received updated config:')
               console.log(JSON.stringify(newConfig))
+              // set new config for mediator
               config = newConfig
+              // edit iHRIS channel with new config
+              const openhim = OpenHIM(apiConf.api)
+              openhim.fetchChannelByName('AUTO - mHero - update OpenInfoMan from iHRIS', (err, channel) => {
+                if (err) { return console.log('Error: Unable to update iHRIS channel - ', err) }
+                channel.routes[0].path = `/CSD/pollService/directory/${config.openinfoman.queryDocument}/update_cache`
+                openhim.updateChannel(channel._id, channel, (err) => {
+                  if (err) { return console.log('Error: Unable to update iHRIS channel - ', err) }
+                  console.log('Updated iHRIS channel')
+                })
+              })
             })
             callback(server)
           })

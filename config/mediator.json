@@ -38,7 +38,7 @@
           "secured": false,
           "host": "localhost",
           "port": 8984,
-          "path": "/CSD/pollService/directory/<your_document>/update_cache",
+          "path": "/CSD/pollService/directory/Providers/update_cache",
           "primary": true,
           "status": "enabled",
           "type": "http"
