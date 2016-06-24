@@ -5,14 +5,11 @@ const testServer = require('./test-rapidpro-server')
 
 const RapidPro = require('../rapidpro.js')
 
-// don't log during tests - comment these out for debugging
-console.log = () => {}
-console.error = () => {}
-
 const rapidpro = RapidPro({
   url: 'http://localhost:6700',
   slug: 'http://localhost:6700',
-  authtoken: '1234secret'
+  authtoken: '1234secret',
+  logDetailedOrch: true
 })
 
 const rapidpro_withGroup = RapidPro({

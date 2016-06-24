@@ -2,6 +2,7 @@
 'use strict'
 
 const http = require('http')
+const winston = require('winston')
 
 const testRapidProResponse = {
   count: 2,
@@ -221,5 +222,5 @@ exports.start = start
 
 if (!module.parent) {
   // if this script is run directly, start the server
-  start(6700, 'dynamic', () => console.log('Mock RapidPro Server listening on 6700...'))
+  start(6700, 'dynamic', () => winston.info('Mock RapidPro Server listening on 6700...'))
 }

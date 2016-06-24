@@ -29,7 +29,6 @@ module.exports = function (config) {
         Authorization: `Token ${config.authtoken}`
       }
     }
-    console.log(`Fetching group from ${url}`)
 
     request(options, (err, res, body) => {
       if (err) {
@@ -63,7 +62,6 @@ module.exports = function (config) {
         Authorization: `Token ${config.authtoken}`
       }
     }
-    console.log(`Fetching contacts from ${url}`)
 
     request(options, (err, res, body) => {
       if (err) {
@@ -123,7 +121,6 @@ module.exports = function (config) {
         body: contact,
         json: true
       }
-      console.log(`Adding/Updating contact via ${url}`)
 
       request.post(options, (err, res, newContact) => {
         if (err) {
@@ -131,7 +128,10 @@ module.exports = function (config) {
           return
         }
 
-        let orchestrations = [utils.buildOrchestration('Add/Update RapidPro Contact', before, 'POST', options.url, JSON.stringify(contact), res, JSON.stringify(newContact))]
+        let orchestrations = []
+        if (config.logDetailedOrch) {
+          orchestrations.push(utils.buildOrchestration('Add/Update RapidPro Contact', before, 'POST', options.url, JSON.stringify(contact), res, JSON.stringify(newContact)))
+        }
 
         if (newContact) {
           if (newContact.uuid) {

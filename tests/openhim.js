@@ -1,13 +1,13 @@
 'use strict'
 
 const tap = require('tap')
-const testServer = require('./test-openhim-server')
+const winston = require('winston')
 
+const testServer = require('./test-openhim-server')
 const OpenHIM = require('../openhim.js')
 
 // don't log during tests - comment these out for debugging
-console.log = () => {}
-console.error = () => {}
+winston.remove(winston.transports.Console)
 
 const opts = {
   username: 'root@openhim.org',

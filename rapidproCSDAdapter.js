@@ -110,7 +110,7 @@ module.exports = function (config) {
       })
 
       if (tels.length === 0) {
-        throw new Error('couldn\'t find a telephone number, this is a required field for a contact')
+        throw new Error(`couldn\'t find a telephone number for provider with entityID ${uuid}, this is a required field for a contact`)
       }
 
       return {

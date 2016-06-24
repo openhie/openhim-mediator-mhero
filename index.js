@@ -4,6 +4,7 @@
 const Dom = require('xmldom').DOMParser
 const express = require('express')
 const medUtils = require('openhim-mediator-utils')
+const winston = require('winston')
 const xpath = require('xpath')
 
 const Openinfoman = require('./openinfoman')
@@ -23,6 +24,10 @@ const http = require('http')
 https.globalAgent.maxSockets = 5
 http.globalAgent.maxSockets = 5
 
+// Logging setup
+winston.remove(winston.transports.Console)
+winston.add(winston.transports.Console, {level: 'info', timestamp: true, colorize: true})
+
 /**
  * setupApp - configures the http server for this mediator
  *
@@ -39,7 +44,8 @@ function setupApp () {
 
     function reportFailure (err) {
       res.writeHead(500)
-      console.error(err.stack)
+      winston.error(err.stack)
+      winston.error('Something went wrong, relaying error to OpenHIM-core')
       res.end(JSON.stringify({
         'x-mediator-urn': mediatorConfig.urn,
         status: 'Failed',
@@ -52,6 +58,7 @@ function setupApp () {
       }))
     }
 
+    winston.info(`Fetching all providers from ${config.openinfoman.queryDocument}...`)
     openinfoman.fetchAllEntities((err, csdDoc, orchs) => {
       orchestrations = orchestrations.concat(orchs)
       if (err) {
@@ -60,27 +67,35 @@ function setupApp () {
       if (!csdDoc) {
         return reportFailure(new Error('No CSD document returned'))
       }
+      winston.info('Done fetching providers.')
 
       // extract each CSD entity for processing
       const doc = new Dom().parseFromString(csdDoc)
       const select = xpath.useNamespaces({'csd': 'urn:ihe:iti:csd:2013'})
       let entities = select('/csd:CSD/csd:providerDirectory/csd:provider', doc)
       entities = entities.map((entity) => entity.toString())
+      winston.info(`Converting ${entities.length} CSD entities to RapidPro contacts...`)
       let contacts = entities.map((entity) => {
         try {
           return adapter.convertCSDToContact(entity)
         } catch (err) {
-          console.warn('Warning: ' + err.message)
+          winston.warn(`${err.message}, skipping contact`)
+          return null
         }
+      }).filter((c) => {
+        return c !== null
       })
+      winston.info('Done converting to contacts.')
 
       new Promise((resolve, reject) => {
         if (config.rapidpro.groupname) {
+          winston.info('Fetching group uuid for RapidPro...')
           rapidpro.getGroupUUID(config.rapidpro.groupname, (err, groupUUID, orchs) => {
             orchestrations = orchestrations.concat(orchs)
             if (err) {
               reject(err)
             }
+            winston.info(`Done fetching group uuid - ${groupUUID}`)
             resolve(groupUUID)
           })
         } else {
@@ -89,20 +104,25 @@ function setupApp () {
       }).then((groupUUID) => {
         // add group to contacts
         if (groupUUID) {
+          winston.info('Adding group to each contact...')
           contacts = contacts.map((c) => {
             c.group_uuids = [groupUUID]
             return c
           })
+          winston.info('Done adding group to contacts.')
         }
 
         // Add all contacts to RapidPro
+        let errCount = 0
+        winston.info(`Adding/Updating ${contacts.length} contacts to in RapidPro...`)
         const promises = []
         contacts.forEach((contact) => {
           promises.push(new Promise((resolve, reject) => {
             rapidpro.addContact(contact, (err, contact, orchs) => {
               orchestrations = orchestrations.concat(orchs)
               if (err) {
-                reject(err)
+                winston.error(err)
+                errCount++
               }
               resolve()
             })
@@ -110,17 +130,22 @@ function setupApp () {
         })
 
         Promise.all(promises).then(() => {
+          winston.info(`Done adding/updating ${contacts.length} contacts to RapidPro, there were ${errCount} errors.`)
+          winston.info('Fetching RapidPro contacts and converting them to CSD entities...')
           adapter.getRapidProContactsAsCSDEntities(groupUUID, (err, contacts, orchs) => {
             orchestrations = orchestrations.concat(orchs)
             if (err) {
               return reportFailure(err)
             }
+            winston.info(`Done fetching and converting ${contacts.length} contacts.`)
 
+            winston.info('Loading provider directory with contacts...')
             openinfoman.loadProviderDirectory(contacts, (err, orchs) => {
               orchestrations = orchestrations.concat(orchs)
               if (err) {
                 return reportFailure(err)
               }
+              winston.info('Done loading provider directory.')
 
               res.writeHead(200, { 'Content-Type': 'application/json+openhim' })
               res.end(JSON.stringify({
@@ -134,7 +159,7 @@ function setupApp () {
               }))
             })
           })
-        }, reportFailure)
+        })
       }, (err) => {
         return reportFailure(err)
       })
@@ -153,37 +178,35 @@ function start (callback) {
   if (apiConf.register) {
     medUtils.registerMediator(apiConf.api, mediatorConfig, (err) => {
       if (err) {
-        console.log('Failed to register this mediator, check your config')
-        console.log(err.stack)
+        winston.error('Failed to register this mediator, check your config')
+        winston.error(err.stack)
         process.exit(1)
       }
       apiConf.api.urn = mediatorConfig.urn
       medUtils.fetchConfig(apiConf.api, (err, newConfig) => {
-        console.log('Received initial config:')
-        console.log(JSON.stringify(newConfig))
+        winston.info('Received initial config:', newConfig)
         config = newConfig
         if (err) {
-          console.log('Failed to fetch initial config')
-          console.log(err.stack)
+          winston.info('Failed to fetch initial config')
+          winston.info(err.stack)
           process.exit(1)
         } else {
-          console.log('Successfully registered mediator!')
+          winston.info('Successfully registered mediator!')
           let app = setupApp()
           const server = app.listen(8544, () => {
             let configEmitter = medUtils.activateHeartbeat(apiConf.api)
             configEmitter.on('config', (newConfig) => {
-              console.log('Received updated config:')
-              console.log(JSON.stringify(newConfig))
+              winston.info('Received updated config:', newConfig)
               // set new config for mediator
               config = newConfig
               // edit iHRIS channel with new config
               const openhim = OpenHIM(apiConf.api)
               openhim.fetchChannelByName('AUTO - mHero - update OpenInfoMan from iHRIS', (err, channel) => {
-                if (err) { return console.log('Error: Unable to update iHRIS channel - ', err) }
+                if (err) { return winston.error('Error: Unable to update iHRIS channel - ', err) }
                 channel.routes[0].path = `/CSD/pollService/directory/${config.openinfoman.queryDocument}/update_cache`
                 openhim.updateChannel(channel._id, channel, (err) => {
-                  if (err) { return console.log('Error: Unable to update iHRIS channel - ', err) }
-                  console.log('Updated iHRIS channel')
+                  if (err) { return winston.info('Error: Unable to update iHRIS channel - ', err) }
+                  winston.info('Updated iHRIS channel')
                 })
               })
             })
@@ -203,5 +226,5 @@ exports.start = start
 
 if (!module.parent) {
   // if this script is run directly, start the server
-  start(() => console.log('Listening on 8544...'))
+  start(() => winston.info('Listening on 8544...'))
 }

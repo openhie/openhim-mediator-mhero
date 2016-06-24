@@ -4,6 +4,7 @@
 
 const http = require('http')
 const URL = require('url')
+const winston = require('winston')
 
 const response = [{
   _id: '575946b94a20db7a4e071ae4',
@@ -29,8 +30,8 @@ const server = http.createServer(function (req, res) {
     body += chunk.toString()
   })
   req.on('end', function () {
-    console.log(`Received ${req.method} request to ${req.url}`)
-    console.log(`with body: ${body}`)
+    winston.info(`Received ${req.method} request to ${req.url}`)
+    winston.info(`with body: ${body}`)
     let url = URL.parse(req.url)
     if (url.path === '/channels') {
       res.writeHead(200)
@@ -45,7 +46,7 @@ const server = http.createServer(function (req, res) {
         salt: '123'
       }))
     } else {
-      console.log('Error: no path matched')
+      winston.info('Error: no path matched')
       res.writeHead(500)
       res.end()
     }
@@ -54,7 +55,7 @@ const server = http.createServer(function (req, res) {
 
 function start (callback) {
   server.listen(8080, function () {
-    console.log('OpenHIM Server listening on 8080...')
+    winston.info('OpenHIM Server listening on 8080...')
     callback()
   })
 }
@@ -67,5 +68,5 @@ exports.stop = stop
 
 if (!module.parent) {
   // if this script is run directly, start the server
-  start(() => console.log('OpenHIM Server listening on 8080...'))
+  start(() => winston.info('OpenHIM Server listening on 8080...'))
 }

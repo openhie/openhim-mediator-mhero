@@ -57,7 +57,6 @@ module.exports = function (cnf) {
         .segment(config.rapidProDocument)
 
       let before = new Date()
-      console.log(`Clearing directory via ${emptyDirectoryURI.toString()}`)
 
       request.get(emptyDirectoryURI.toString(), (err, res, body) => {
         if (err) {
@@ -81,7 +80,6 @@ module.exports = function (cnf) {
         }
 
         before = new Date()
-        console.log(`Loading directory contents via ${updateURI.toString()}`)
 
         request.post(options, (err, res, body) => {
           if (err) {
