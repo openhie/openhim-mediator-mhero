@@ -2,6 +2,7 @@
 'use strict'
 
 const http = require('http')
+const winston = require('winston')
 
 const response = `<CSD xmlns='urn:ihe:iti:csd:2013'>
                     <serviceDirectory/>
@@ -41,8 +42,8 @@ const server = http.createServer(function (req, res) {
     body += chunk.toString()
   })
   req.on('end', function () {
-    console.log(`Recieved ${req.method} request to ${req.url}`)
-    console.log(`with body: ${body}`)
+    winston.info(`Recieved ${req.method} request to ${req.url}`)
+    winston.info(`with body: ${body}`)
     res.writeHead(200)
     res.end(response)
   })
@@ -50,7 +51,7 @@ const server = http.createServer(function (req, res) {
 
 function start (callback) {
   server.listen(8984, function () {
-    console.log('Mock server listening on 8984')
+    winston.info('Mock server listening on 8984')
     callback()
   })
 }
@@ -63,5 +64,5 @@ exports.stop = stop
 
 if (!module.parent) {
   // if this script is run directly, start the server
-  start(() => console.log('CSD Server listening on 8984...'))
+  start(() => winston.info('CSD Server listening on 8984...'))
 }

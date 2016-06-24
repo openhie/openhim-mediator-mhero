@@ -7,10 +7,6 @@ const testServer = require('./test-rapidpro-server')
 
 const RapidProCSDAdapter = require('../rapidproCSDAdapter')
 
-// don't log during tests - comment these out for debugging
-console.log = () => {}
-console.error = () => {}
-
 const adapter = RapidProCSDAdapter({
   rapidpro: {
     url: 'http://localhost:6700',
@@ -266,7 +262,7 @@ tap.test('RapidProCSDAdapter.convertCSDToContact() should throw an error if some
     adapter.convertCSDToContact(csdProviderNoTel)
   } catch (e) {
     t.ok(e, 'should throw an error')
-    t.equal(e.message, 'couldn\'t find a telephone number, this is a required field for a contact', 'should return a readable message')
+    t.equal(e.message, 'couldn\'t find a telephone number for provider with entityID urn:uuid:a97b9397-ce4e-4a57-b12a-0d46ce6f36b7, this is a required field for a contact', 'should return a readable message')
     t.end()
   }
 })

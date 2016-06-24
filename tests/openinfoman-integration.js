@@ -4,11 +4,8 @@ const Openinfoman = require('../openinfoman')
 const tap = require('tap')
 const xpath = require('xpath')
 const Dom = require('xmldom').DOMParser
+const winston = require('winston')
 const csdServer = require('./test-csd-server')
-
-// don't log during tests - comment these out for debugging
-console.log = () => {}
-console.error = () => {}
 
 const openinfoman = Openinfoman({
   url: 'http://localhost:8984',
@@ -20,7 +17,7 @@ tap.test('openinfoman.fetchAllEntities should fetch all entries', (t) => {
   csdServer.start(() => {
     openinfoman.fetchAllEntities((err, result) => {
       if (err) {
-        console.error(err.stack)
+        winston.info.error(err.stack)
       }
       t.ok(result, 'the result should be instanciated')
       const doc = new Dom().parseFromString(result)
