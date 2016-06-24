@@ -69,6 +69,8 @@ Vagrant.configure(2) do |config|
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
     sudo add-apt-repository -y ppa:openhie/release
+    sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927
+    sudo echo 'deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse' | sudo tee /etc/apt/sources.list.d/mongodb-org-3.2.list
     sudo apt-get update
     echo "openhim-console openhim-console/selecthost string localhost" | debconf-set-selections
     echo "openhim-console openhim-console/selectport string 8080" | debconf-set-selections
@@ -77,7 +79,7 @@ Vagrant.configure(2) do |config|
     echo "openhim-mediator-mhero openhim-config/username string root@openhim.org" | debconf-set-selections
     echo "openhim-mediator-mhero openhim-config/password password openhim-password" | debconf-set-selections
     echo "openhim-mediator-mhero openhim-config/protocol string https" | debconf-set-selections
-    # sudo apt-get install -y openhim-core-js openhim-console
-    # sudo dpkg -i /vagrant/packaging/builds/openhim-mediator-mhero_*.deb
+    sudo apt-get install -y openhim-core-js openhim-console
+    sudo dpkg -i /vagrant/packaging/builds/openhim-mediator-mhero_*.deb
   SHELL
 end
