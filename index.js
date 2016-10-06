@@ -37,35 +37,45 @@ function setupApp () {
   const app = express()
 
   app.get('/sync', (req, res) => {
+    req.timestamp = new Date()
     let orchestrations = []
     const openinfoman = Openinfoman(config.openinfoman)
     const rapidpro = RapidPro(config.rapidpro)
     const adapter = RapidProCSDAdapter(config)
 
-    function reportFailure (err) {
-      res.writeHead(500)
+    function reportFailure (err, req) {
+      res.writeHead(500, { 'Content-Type': 'application/json+openhim' })
       winston.error(err.stack)
       winston.error('Something went wrong, relaying error to OpenHIM-core')
-      res.end(JSON.stringify({
+      let response = JSON.stringify({
         'x-mediator-urn': mediatorConfig.urn,
         status: 'Failed',
+        request: {
+          method: req.method,
+          headers: req.headers,
+          timestamp: req.timestamp,
+          path: req.path
+        },
         response: {
           status: 500,
           body: err.stack,
           timestamp: new Date()
         },
         orchestrations: orchestrations
-      }))
+      })
+      res.end(response)
     }
 
     winston.info(`Fetching all providers from ${config.openinfoman.queryDocument}...`)
     openinfoman.fetchAllEntities((err, csdDoc, orchs) => {
-      orchestrations = orchestrations.concat(orchs)
+      if (orchs) {
+        orchestrations = orchestrations.concat(orchs)
+      }
       if (err) {
-        return reportFailure(err)
+        return reportFailure(err, req)
       }
       if (!csdDoc) {
-        return reportFailure(new Error('No CSD document returned'))
+        return reportFailure(new Error('No CSD document returned'), req)
       }
       winston.info('Done fetching providers.')
 
@@ -91,7 +101,9 @@ function setupApp () {
         if (config.rapidpro.groupname) {
           winston.info('Fetching group uuid for RapidPro...')
           rapidpro.getGroupUUID(config.rapidpro.groupname, (err, groupUUID, orchs) => {
-            orchestrations = orchestrations.concat(orchs)
+            if (orchs) {
+              orchestrations = orchestrations.concat(orchs)
+            }
             if (err) {
               reject(err)
             }
@@ -119,7 +131,9 @@ function setupApp () {
         contacts.forEach((contact) => {
           promises.push(new Promise((resolve, reject) => {
             rapidpro.addContact(contact, (err, contact, orchs) => {
-              orchestrations = orchestrations.concat(orchs)
+              if (orchs) {
+                orchestrations = orchestrations.concat(orchs)
+              }
               if (err) {
                 winston.error(err)
                 errCount++
@@ -133,17 +147,21 @@ function setupApp () {
           winston.info(`Done adding/updating ${contacts.length} contacts to RapidPro, there were ${errCount} errors.`)
           winston.info('Fetching RapidPro contacts and converting them to CSD entities...')
           adapter.getRapidProContactsAsCSDEntities(groupUUID, (err, contacts, orchs) => {
-            orchestrations = orchestrations.concat(orchs)
+            if (orchs) {
+              orchestrations = orchestrations.concat(orchs)
+            }
             if (err) {
-              return reportFailure(err)
+              return reportFailure(err, req)
             }
             winston.info(`Done fetching and converting ${contacts.length} contacts.`)
 
             winston.info('Loading provider directory with contacts...')
             openinfoman.loadProviderDirectory(contacts, (err, orchs) => {
-              orchestrations = orchestrations.concat(orchs)
+              if (orchs) {
+                orchestrations = orchestrations.concat(orchs)
+              }
               if (err) {
-                return reportFailure(err)
+                return reportFailure(err, req)
               }
               winston.info('Done loading provider directory.')
 
@@ -151,6 +169,12 @@ function setupApp () {
               res.end(JSON.stringify({
                 'x-mediator-urn': mediatorConfig.urn,
                 status: 'Successful',
+                request: {
+                  method: req.method,
+                  headers: req.headers,
+                  timestamp: req.timestamp,
+                  path: req.path
+                },
                 response: {
                   status: 200,
                   timestamp: new Date()
@@ -161,7 +185,7 @@ function setupApp () {
           })
         })
       }, (err) => {
-        return reportFailure(err)
+        return reportFailure(err, req)
       })
     })
   })
