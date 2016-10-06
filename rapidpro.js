@@ -2,6 +2,7 @@
 const request = require('request')
 const URI = require('urijs')
 const utils = require('./utils')
+const winston = require('winston')
 
 module.exports = function (config) {
   const contactsURL = function (groupUUID) {
@@ -137,7 +138,8 @@ module.exports = function (config) {
           if (newContact.uuid) {
             callback(null, newContact, orchestrations)
           } else {
-            callback(new Error('No uuid set in contact, it probably didn\'t get saved in RapidPro'), newContact, orchestrations)
+	    winston.error('No uuid set in contact, it probably didn\'t get saved in RapidPro')
+	    callback(null, newContact, orchestrations)
           }
         } else {
           callback(new Error('No body returned, the contact probably didn\'t get saved in RapidPro'), null, orchestrations)
