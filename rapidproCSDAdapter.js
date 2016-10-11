@@ -3,6 +3,7 @@ const Dom = require('xmldom').DOMParser
 const RapidPro = require('./rapidpro')
 const xpath = require('xpath')
 const _ = require('lodash')
+const winston = require('winston')
 
 module.exports = function (config) {
   const rapidpro = RapidPro(config.rapidpro)
@@ -89,8 +90,9 @@ module.exports = function (config) {
           callback(null, converted, _orchestrations.concat(orchestrations))
         }
       }
-
-      rapidpro.getContacts(groupUUID, getContactsCallback([]))
+      
+		let url = rapidpro.contactsURL(groupUUID)
+      rapidpro.getContacts(url, getContactsCallback([]))
     },
 
     /**
