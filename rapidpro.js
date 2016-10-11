@@ -53,10 +53,9 @@ module.exports = function (config) {
     })
   }
 
-  const getContacts = function (groupUUID, callback) {
-    let url = contactsURL(groupUUID)
+  const getContacts = function (url, callback) {
+  	global.counter++
     let before = new Date()
-
     let options = {
       url: url,
       headers: {
@@ -70,20 +69,27 @@ module.exports = function (config) {
         return
       }
 
-      let orchestrations = [utils.buildOrchestration('RapidPro Fetch Contacts', before, 'GET', options.url, null, res, body)]
+      global.orchestrations = global.orchestrations + [utils.buildOrchestration('RapidPro Fetch Contacts', before, 'GET', options.url, null, res, body)]
 
       if (res.statusCode !== 200) {
-        callback(`RapidPro responded with status ${res.statusCode}`, null, orchestrations)
+        callback(`RapidPro responded with status ${res.statusCode}`, null, global.orchestrations)
         return
       }
 
-      let results = JSON.parse(body).results
-      if (!results) {
-        results = []
+      global.results = global.results + JSON.parse(body).results
+      let next = JSON.parse(body).next
+      if(next) {
+      	winston.error(next)
+      	getContacts(next)
       }
-      results = results.filter(hasGlobalID)
-
-      callback(null, results, orchestrations)
+      if (!global.results) {
+        global.results = []
+      }
+      global.counter--
+      if(global.counter == 0) {
+      	global.results = global.results.filter(hasGlobalID)
+      	callback(null, global.results, orchestrations)
+   	}
     })
   }
 
