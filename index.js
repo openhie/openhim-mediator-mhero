@@ -5,8 +5,11 @@ const Dom = require('xmldom').DOMParser
 const express = require('express')
 const medUtils = require('openhim-mediator-utils')
 const winston = require('winston')
+const unique = require('array-unique');
+const async = require('async')
 const xpath = require('xpath')
-
+const _ = require('underscore');
+const fs = require('fs');
 const Openinfoman = require('./openinfoman')
 const RapidPro = require('./rapidpro')
 const RapidProCSDAdapter = require('./rapidproCSDAdapter')
@@ -27,6 +30,8 @@ http.globalAgent.maxSockets = 5
 // Logging setup
 winston.remove(winston.transports.Console)
 winston.add(winston.transports.Console, {level: 'info', timestamp: true, colorize: true})
+
+process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
 
 /**
  * setupApp - configures the http server for this mediator
@@ -66,6 +71,133 @@ function setupApp () {
       res.end(response)
     }
 
+    function search_rapidpro_by_urn(oim_cont,rapidpro_contacts,callback) {
+      const promises = []
+      var matched_cont = ""
+      for(var uuid in rapidpro_contacts) {
+        var rp_cont = rapidpro_contacts[uuid]
+        promises.push(new Promise((resolve, reject) => {
+          if(rp_cont.fields.globalid == null || rp_cont.fields.globalid == undefined || rp_cont.fields.globalid == ""){
+            var intersection = _.intersection(oim_cont.urns,rp_cont.urns)
+            if(intersection.length>0) {
+              matched_cont = rp_cont
+            }
+            resolve()
+          }
+          else
+          resolve()
+        }))
+      }
+
+      Promise.all(promises).then(() => {
+        callback(matched_cont)
+      })
+    }
+
+    function extract_groupuuids (groups,callback) {
+      var uuids = []
+      async.eachSeries(groups,(group,nxtgrp)=>{
+        uuids.push(group.uuid)
+        nxtgrp()
+      },function(){
+        return callback(uuids)
+      })
+    }
+
+    function merge_contacts(rapidpro_contact,oim_cont,groupUUID,callback) {
+      var record = []
+      var oim_urns = oim_cont.urns
+      record = rapidpro_contact
+      if(!record.hasOwnProperty("urns")) {
+        record.urns = []
+      }
+      async.eachSeries(oim_urns,(oim_urn,nextUrn)=>{
+        if(record.urns.indexOf(oim_urn) != -1) {
+          return nextUrn()
+        }
+        record.urns.push(oim_urn)
+        return nextUrn()
+
+      },function(){
+        record.fields.globalid = oim_cont.fields.globalid
+        if(oim_cont.hasOwnProperty("name") && (rapidpro_contact.name==null||rapidpro_contact.name==undefined||rapidpro_contact.name=="")) {
+          record.name = oim_cont.name
+        }
+        if(record.hasOwnProperty("groups")) {
+          var groups = record.groups
+          delete record.groups
+        }
+        extract_groupuuids(groups,(grp_uuids)=>{
+          if(grp_uuids.length>0) {
+            record.groups = []
+            record.groups = grp_uuids
+          }
+          if (groupUUID) {
+            if(!record.hasOwnProperty("groups"))
+            record.groups = []
+            record.groups.push(groupUUID)
+          }
+          unique(record.groups)
+          return callback(record)
+        })
+      })
+    }
+
+    function generate_contacts (openifoman_contacts,rapidpro_contacts,groupUUID,callback) {
+      var records = []
+      async.eachSeries(openifoman_contacts,(oim_cont,nextOIMCont)=>{
+        if( !oim_cont.hasOwnProperty("fields") ||
+            !oim_cont.fields.hasOwnProperty("globalid") ||
+            !oim_cont.hasOwnProperty("urns") ||
+            Object.keys(oim_cont.urns).length == 0
+          ) {
+          return nextOIMCont()
+        }
+        var globalid = oim_cont.fields.globalid
+        if(!globalid) {
+          return nextOIMCont()
+        }
+        var oim_urns = oim_cont.urns
+        //if any of rapidpro cont has this globalid then merge with ihris contact
+        if(rapidpro_contacts.hasOwnProperty(globalid)) {
+          merge_contacts(rapidpro_contacts[globalid],oim_cont,groupUUID,(record)=>{
+            records.push(record)
+            return nextOIMCont()
+          })
+        }
+        //if nothing mathes by globalid then try mathes by phone number
+        else {
+          search_rapidpro_by_urn(oim_cont,rapidpro_contacts,(matched_cont)=>{
+            if(matched_cont.uuid != null && matched_cont.uuid != undefined && matched_cont.uuid != "") {
+              merge_contacts(matched_cont,oim_cont,groupUUID,(record)=>{
+                records.push(record)
+                return nextOIMCont()
+              })
+            }
+            else {
+              var record = {"urns":oim_urns,"fields":{"globalid":globalid}}
+              if(oim_cont.hasOwnProperty("name")) {
+                record.name = oim_cont.name
+              }
+              if (groupUUID) {
+                if(record.hasOwnProperty("groups"))
+                record.groups.push(groupUUID)
+                else {
+                  record.groups = []
+                  record.groups.push(groupUUID)
+                }
+              }
+              records.push(record)
+              return nextOIMCont()
+            }
+          })
+        }
+
+      },function(){
+        callback(records)
+      })
+    }
+
     winston.info(`Fetching all providers from ${config.openinfoman.queryDocument}...`)
     openinfoman.fetchAllEntities((err, csdDoc, orchs) => {
       if (orchs) {
@@ -84,7 +216,7 @@ function setupApp () {
       const select = xpath.useNamespaces({'csd': 'urn:ihe:iti:csd:2013'})
       let entities = select('/csd:CSD/csd:providerDirectory/csd:provider', doc)
       entities = entities.map((entity) => entity.toString())
-      winston.info(`Converting ${entities.length} CSD entities to RapidPro contacts...`)
+      winston.info(`Converting ${entities.length} CSD entities to RapidPro contacts format...`)
       let contacts = entities.map((entity) => {
         try {
           return adapter.convertCSDToContact(entity)
@@ -95,7 +227,7 @@ function setupApp () {
       }).filter((c) => {
         return c !== null
       })
-      winston.info('Done converting to contacts.')
+      winston.info('Done converting Providers to rapidpro contact format.')
 
       new Promise((resolve, reject) => {
         if (config.rapidpro.groupname) {
@@ -114,33 +246,35 @@ function setupApp () {
           resolve(null)
         }
       }).then((groupUUID) => {
-        // add group to contacts
-        if (groupUUID) {
-          winston.info('Adding group to each contact...')
-          contacts = contacts.map((c) => {
-            c.group_uuids = [groupUUID]
-            return c
-          })
-          winston.info('Done adding group to contacts.')
-        }
-
-        // Add all contacts to RapidPro
-        let errCount = 0
-        winston.info(`Adding/Updating ${contacts.length} contacts to in RapidPro...`)
         const promises = []
-        contacts.forEach((contact) => {
-          promises.push(new Promise((resolve, reject) => {
-            rapidpro.addContact(contact, (err, contact, orchs) => {
-              if (orchs) {
-                orchestrations = orchestrations.concat(orchs)
-              }
-              if (err) {
-                winston.error(err)
-                errCount++
-              }
-              resolve()
+        let errCount = 0
+        winston.info("Editing phone numbers")
+        winston.info("Done editing phone numbers")
+        winston.info("Getting Rapidpro Contacts")
+        rapidpro.getCurrent((rp_contacts)=>{
+          winston.info("Donw getting Rapidpro Contacts")
+          winston.info("Generating Contacts based on iHRIS and Rapidpro")
+          generate_contacts(contacts,rp_contacts,groupUUID,(contacts)=>{
+            winston.info("Done Generating Contacts based on iHRIS and Rapidpro")
+            // Add all contacts to RapidPro
+            winston.info(`Adding/Updating ${contacts.length} contacts to in RapidPro...`)
+            contacts.forEach((contact) => {
+              setTimeout(function(){
+                promises.push(new Promise((resolve, reject) => {
+                  rapidpro.addContact(contact, (err, contact, orchs) => {
+                    if (orchs) {
+                      orchestrations = orchestrations.concat(orchs)
+                    }
+                    if (err) {
+                      winston.error(err)
+                      errCount++
+                    }
+                    resolve()
+                  })
+                }))
+            },1500)
             })
-          }))
+          })
         })
 
         Promise.all(promises).then(() => {
@@ -217,7 +351,7 @@ function start (callback) {
         } else {
           winston.info('Successfully registered mediator!')
           let app = setupApp()
-          const server = app.listen(8544, () => {
+          const server = app.listen(8586, () => {
             let configEmitter = medUtils.activateHeartbeat(apiConf.api)
             configEmitter.on('config', (newConfig) => {
               winston.info('Received updated config:', newConfig)
@@ -243,12 +377,12 @@ function start (callback) {
     // default to config from mediator registration
     config = mediatorConfig.config
     let app = setupApp()
-    const server = app.listen(8544, () => callback(server))
+    const server = app.listen(8586, () => callback(server))
   }
 }
 exports.start = start
 
 if (!module.parent) {
   // if this script is run directly, start the server
-  start(() => winston.info('Listening on 8544...'))
+  start(() => winston.info('Listening on 8586...'))
 }

@@ -3,10 +3,11 @@ const request = require('request')
 const URI = require('urijs')
 const utils = require('./utils')
 const winston = require('winston')
+const async = require('async')
 
 module.exports = function (config) {
   const contactsURL = function (groupUUID) {
-    let url = URI(config.url).segment('api/v1/contacts.json')
+    let url = URI(config.url).segment('api/v2/contacts.json')
     if (groupUUID) {
       url = url.addQuery('group_uuids', groupUUID)
     }
@@ -19,7 +20,7 @@ module.exports = function (config) {
 
   const getGroupUUID = function (groupName, callback) {
     let url = URI(config.url)
-      .segment('api/v1/groups.json')
+      .segment('api/v2/groups.json')
       .addQuery('name', groupName)
       .toString()
     let before = new Date()
@@ -64,9 +65,9 @@ module.exports = function (config) {
   	 else if(!nextpage || typeof nextpage === 'function') {
     	var url = contactsURL(groupUUID)
  	 }
-    
+
     nextpage = null
-  
+
     let before = new Date()
 
     let options = {
@@ -81,7 +82,7 @@ module.exports = function (config) {
         callback(err)
         return
       }
-		
+
 		if(!orchestrations)
       orchestrations = [utils.buildOrchestration('RapidPro Fetch Contacts', before, 'GET', options.url, null, res, body)]
       else
@@ -91,12 +92,12 @@ module.exports = function (config) {
         callback(`RapidPro responded with status ${res.statusCode}`, null, orchestrations)
         return
       }
-		
+
 		if(results)
       results = results.concat(JSON.parse(body).results)
       else
       results = JSON.parse(body).results
-      
+
       let next = JSON.parse(body).next
       if(next) {
       	getContacts (groupUUID,next,results,orchestrations,callback)
@@ -109,7 +110,7 @@ module.exports = function (config) {
 
       	callback(null, results, orchestrations)
       }
-      
+
     })
   }
 
@@ -138,6 +139,8 @@ module.exports = function (config) {
      */
     addContact: function (contact, callback) {
       let url = contactsURL()
+      if(contact.hasOwnProperty("uuid"))
+      url = url + "?uuid=" + contact.uuid
       let before = new Date()
 
       let options = {
@@ -148,7 +151,6 @@ module.exports = function (config) {
         body: contact,
         json: true
       }
-
       request.post(options, (err, res, newContact) => {
         if (err) {
           callback(err)
@@ -159,18 +161,67 @@ module.exports = function (config) {
         if (config.logDetailedOrch) {
           orchestrations.push(utils.buildOrchestration('Add/Update RapidPro Contact', before, 'POST', options.url, JSON.stringify(contact), res, JSON.stringify(newContact)))
         }
-
+        winston.info(newContact)
         if (newContact) {
           if (newContact.uuid) {
             callback(null, newContact, orchestrations)
           } else {
-	    winston.error('No uuid set in contact, it probably didn\'t get saved in RapidPro')
+	    //winston.error('No uuid set in contact, it probably didn\'t get saved in RapidPro')
 	    callback(null, newContact, orchestrations)
           }
         } else {
           callback(new Error('No body returned, the contact probably didn\'t get saved in RapidPro'), null, orchestrations)
         }
       })
+    },
+    getCurrent: function(callback) {
+      var next = URI(config.url)
+          .segment('api/v2/contacts.json')
+          .toString()
+      var contacts = {}
+      var rp_contacts = {}
+      async.doWhilst(
+        function(callback) {
+          let options = {
+            url: next,
+            headers: {
+              Authorization: `Token ${config.authtoken}`
+            }
+          }
+          request(options, (err, res, body) => {
+            if (err) {
+              callback(err)
+              return
+            }
+            body = JSON.parse(body)
+            if(!body.hasOwnProperty("results")) {
+              winston.error("An error occured while fetching contacts to rapidpro")
+              return callback()
+            }
+            if(body.next)
+              next = body.next
+            else
+              next = false
+            async.eachSeries(body["results"],(contact,nextCont)=>{
+              if(contact.fields.hasOwnProperty("globalid") && contact.fields.globalid != null && contact.fields.globalid != undefined && contact.fields.globalid != "")
+                contacts[contact.fields.globalid] = contact
+              else
+                contacts[contact.uuid] = contact
+              nextCont()
+            },function(){
+              callback(false,next)
+            })
+          })
+        },
+        function() {
+          if(next)
+          winston.info("Fetching In" + next)
+          return (next!=false)
+        },
+        function() {
+          return callback(contacts)
+        }
+      )
     }
   }
 }
