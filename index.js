@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/**
+This mediator synchronises contactacts between OpenInfoMan and Rapidpro. It starts by creating contacts from OpenInfoMan to Rapidpro and then take all created contacts in rapidpro back to OpenInfoMan
+If there is exist a contact in rapidpro that has the same globalid as the one we want to create from openInfoMan then the contact in rapidpro will be updated.
+If there is another contact in rapidpro having one one of the phone numbers of the contact we want to create into rapidpro but this rapidpro contact has no any globalid then this rapidpro contact is updated.
+If there is another contact in rapidpro having one one of the phone numbers of the contact we want to create into rapidpro but this rapidpro contact has a different globalid to what we want to create then this rapidpro contact is not going to be updated.
+**/
 'use strict'
 
 const Dom = require('xmldom').DOMParser
@@ -7,6 +13,7 @@ const medUtils = require('openhim-mediator-utils')
 const winston = require('winston')
 const unique = require('array-unique');
 const async = require('async')
+const moment = require('moment')
 const xpath = require('xpath')
 const _ = require('underscore');
 const fs = require('fs');
@@ -47,6 +54,7 @@ function setupApp () {
     const openinfoman = Openinfoman(config.openinfoman)
     const rapidpro = RapidPro(config.rapidpro)
     const adapter = RapidProCSDAdapter(config)
+    const openhim = OpenHIM(apiConf.api)
 
     function reportFailure (err, req) {
       res.writeHead(500, { 'Content-Type': 'application/json+openhim' })
@@ -199,7 +207,7 @@ function setupApp () {
     }
 
     winston.info(`Fetching all providers from ${config.openinfoman.queryDocument}...`)
-    openinfoman.fetchAllEntities((err, csdDoc, orchs) => {
+    openinfoman.fetchAllEntities(config.sync.last_sync,config.sync.reset,(err, csdDoc, orchs) => {
       if (orchs) {
         orchestrations = orchestrations.concat(orchs)
       }
@@ -246,21 +254,20 @@ function setupApp () {
           resolve(null)
         }
       }).then((groupUUID) => {
-        const promises = []
         let errCount = 0
         winston.info("Editing phone numbers")
         winston.info("Done editing phone numbers")
         winston.info("Getting Rapidpro Contacts")
         rapidpro.getCurrent((rp_contacts)=>{
-          winston.info("Donw getting Rapidpro Contacts")
+          winston.info("Done getting Rapidpro Contacts")
           winston.info("Generating Contacts based on iHRIS and Rapidpro")
           generate_contacts(contacts,rp_contacts,groupUUID,(contacts)=>{
             winston.info("Done Generating Contacts based on iHRIS and Rapidpro")
-            // Add all contacts to RapidPro
             winston.info(`Adding/Updating ${contacts.length} contacts to in RapidPro...`)
+            const promises = []
             contacts.forEach((contact) => {
-              setTimeout(function(){
                 promises.push(new Promise((resolve, reject) => {
+                  setTimeout(function(){
                   rapidpro.addContact(contact, (err, contact, orchs) => {
                     if (orchs) {
                       orchestrations = orchestrations.concat(orchs)
@@ -268,53 +275,60 @@ function setupApp () {
                     if (err) {
                       winston.error(err)
                       errCount++
+                      reject()
                     }
                     resolve()
                   })
+                  },1500)
                 }))
-            },1500)
             })
-          })
-        })
+            Promise.all(promises).then(() => {
+              winston.info(`Done adding/updating ${contacts.length} contacts to RapidPro, there were ${errCount} errors.`)
+              var now = moment().format("YYYY-MM-DDTHH:mm:ss")
+              config.sync.last_sync = now
+              config.sync.reset = false
+              winston.info("Updating Last Sync")
+              openhim.updateConfig(mediatorConfig.urn,config,(res)=>{
+                winston.info("Done Updating Last Sync")
+              })
+              winston.info('Fetching RapidPro contacts and converting them to CSD entities...')
+              adapter.getRapidProContactsAsCSDEntities(groupUUID, (err, contacts, orchs) => {
+                if (orchs) {
+                  orchestrations = orchestrations.concat(orchs)
+                }
+                if (err) {
+                  return reportFailure(err, req)
+                }
+                winston.info(`Done fetching and converting ${contacts.length} contacts.`)
 
-        Promise.all(promises).then(() => {
-          winston.info(`Done adding/updating ${contacts.length} contacts to RapidPro, there were ${errCount} errors.`)
-          winston.info('Fetching RapidPro contacts and converting them to CSD entities...')
-          adapter.getRapidProContactsAsCSDEntities(groupUUID, (err, contacts, orchs) => {
-            if (orchs) {
-              orchestrations = orchestrations.concat(orchs)
-            }
-            if (err) {
-              return reportFailure(err, req)
-            }
-            winston.info(`Done fetching and converting ${contacts.length} contacts.`)
+                winston.info('Loading provider directory with contacts...')
+                openinfoman.loadProviderDirectory(contacts, (err, orchs) => {
+                  if (orchs) {
+                    orchestrations = orchestrations.concat(orchs)
+                  }
+                  if (err) {
+                    return reportFailure(err, req)
+                  }
+                  winston.info('Done loading provider directory.')
 
-            winston.info('Loading provider directory with contacts...')
-            openinfoman.loadProviderDirectory(contacts, (err, orchs) => {
-              if (orchs) {
-                orchestrations = orchestrations.concat(orchs)
-              }
-              if (err) {
-                return reportFailure(err, req)
-              }
-              winston.info('Done loading provider directory.')
-
-              res.writeHead(200, { 'Content-Type': 'application/json+openhim' })
-              res.end(JSON.stringify({
-                'x-mediator-urn': mediatorConfig.urn,
-                status: 'Successful',
-                request: {
-                  method: req.method,
-                  headers: req.headers,
-                  timestamp: req.timestamp,
-                  path: req.path
-                },
-                response: {
-                  status: 200,
-                  timestamp: new Date()
-                },
-                orchestrations: orchestrations
-              }))
+                  res.writeHead(200, { 'Content-Type': 'application/json+openhim' })
+                  res.end(JSON.stringify({
+                    'x-mediator-urn': mediatorConfig.urn,
+                    status: 'Successful',
+                    request: {
+                      method: req.method,
+                      headers: req.headers,
+                      timestamp: req.timestamp,
+                      path: req.path
+                    },
+                    response: {
+                      status: 200,
+                      timestamp: new Date()
+                    },
+                    orchestrations: orchestrations
+                  }))
+                })
+              })
             })
           })
         })

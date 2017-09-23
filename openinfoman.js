@@ -16,24 +16,29 @@ module.exports = function (cnf) {
     * @param {Function} callback The callback takes the form of
     * callback(err, result, orchestrations).
     */
-    fetchAllEntities: function (callback) {
+    fetchAllEntities: function (last_sync,reset,callback) {
       let uri = new URI(config.url)
         .segment('/CSD/csr/')
         .segment(config.queryDocument)
         .segment('careServicesRequest')
         .segment('/urn:ihe:iti:csd:2014:stored-function:provider-search')
 
+      if(reset) {
+        var record = '<csd:record updated="1970-01-01T00:00:00"/>'
+      }
+      else
+        var record = '<csd:record updated="' + last_sync +'"/>'
       var options = {
         url: uri.toString(),
         headers: {
           'Content-Type': 'text/xml'
         },
         body: `<csd:requestParams xmlns:csd="urn:ihe:iti:csd:2013">
-        </csd:requestParams>`
+                ${record}
+                </csd:requestParams>`
       }
 
       let before = new Date()
-
       request.post(options, function (err, res, body) {
         if (err) {
           return callback(err)
