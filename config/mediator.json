@@ -1,5 +1,5 @@
 {
-  "urn": "urn:uuid:7078b8b7-16b9-48cd-b8ad-38be64733d73",
+  "urn": "urn:uuid:7078b8b7-16b9-48cd-b8ad-38be64733d74",
   "version": "0.6.0",
   "name": "mHero sync",
   "description": "This mediator synchronises data between the mHero systems",
@@ -147,6 +147,25 @@
           "type": "string"
         }
       ]
+    }, {
+      "param": "sync",
+      "displayName": "Sync Configuration",
+      "description": "Sync Configuration",
+      "type": "struct",
+      "template": [
+        {
+          "param": "last_sync",
+          "displayName": "Last Sync",
+          "description": "Only Data that were updated after this time will be fetched from iHRIS (format 2017-09-10T19:28:56)",
+          "type": "string"
+        },
+        {
+          "param": "reset",
+          "displayName": "Reset Last Sync",
+          "description": "If set to yes then all data will be sync,ignoring last updated",
+          "type": "bool"
+        }
+      ]
     }
   ],
   "config": {
@@ -161,6 +180,10 @@
       "url": "http://localhost:8984",
       "queryDocument": "Providers",
       "rapidProDocument": "RapidProContacts"
+    },
+    "sync": {
+      "last_sync": "1970-01-01T00:00:00",
+      "reset": false
     }
   }
 }

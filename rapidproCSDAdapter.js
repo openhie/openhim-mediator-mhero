@@ -16,11 +16,11 @@ module.exports = function (config) {
    */
   const buildContactsByGlobalIDMap = function (contacts) {
     let map = {}
-    for (let contact of contacts) {
-      if (!map[contact.fields.globalid]) {
-        map[contact.fields.globalid] = []
+    for (let globalid in contacts) {
+      if (!map[globalid]) {
+        map[globalid] = []
       }
-      map[contact.fields.globalid].push(contact)
+      map[globalid].push(contacts[globalid])
     }
     return map
   }
@@ -48,7 +48,7 @@ module.exports = function (config) {
 
     return `
       <provider entityID="${globalid}">
-        <otherID code="rapidpro_contact_id" assigningAuthorityName="{${config.rapidpro.url}}{${config.rapidpro.slug}}">${contacts.map((c) => c.uuid)}</otherID>
+        <otherID code="rapidpro_contact_id" assigningAuthorityName="${config.rapidpro.url}/${config.rapidpro.slug}">${contacts.map((c) => c.uuid)}</otherID>
         ${groups}
         <demographic>
           <name>
@@ -76,22 +76,14 @@ module.exports = function (config) {
      * @param {Function} callback (err, contacts, orchestrations)
      */
     getRapidProContactsAsCSDEntities: function (groupUUID, callback) {
-      let getContactsCallback = (_orchestrations) => (err, contacts, orchestrations) => {
-        if (err) {
-          callback(err, null, _orchestrations)
-        } else {
-          let contactsMap = buildContactsByGlobalIDMap(contacts)
-          let converted = []
-
-          for (let k in contactsMap) {
-            converted.push(convertRapidProContactToCSD(k, contactsMap[k]))
-          }
-
-          callback(null, converted, _orchestrations.concat(orchestrations))
+      rapidpro.getContacts(false,true,groupUUID,(contacts)=>{
+        let contactsMap = buildContactsByGlobalIDMap(contacts)
+        let converted = []
+        for (let k in contactsMap) {
+          converted.push(convertRapidProContactToCSD(k, contactsMap[k]))
         }
-      }
-
-      rapidpro.getContacts(groupUUID, getContactsCallback([]))
+        callback(null, converted)
+      })
     },
 
     /**

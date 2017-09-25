@@ -206,6 +206,93 @@ function setupApp () {
       })
     }
 
+    function edit_phone (contacts,callback) {
+      //ensure all contacts starts with country code
+      const promises = []
+      contacts = contacts.map((c) => {
+        c.urns.forEach((originalCont,index)=>{
+          promises.push(new Promise((resolve, reject) => {
+          //some contacts are grouped together using / i.e phone1/phone2
+          var modifiedCont = originalCont.split("/").map((cont)=>{
+            cont = cont.toString()
+            cont = cont.trim()
+            cont = cont.replace(/-/gi,"")
+            cont = cont.replace(/ /g,'')
+            var pos = cont.indexOf("+231")
+            if(pos === -1) {
+              if(cont.indexOf("tel:0") !== -1) {
+                cont = cont.replace("tel:0","tel:+231")
+              }
+              else if(cont.indexOf("tel:8") !== -1) {
+                cont = cont.replace("tel:8","tel:+2318")
+              }
+              else if(cont.indexOf("tel:7") !== -1) {
+                cont = cont.replace("tel:7","tel:+2317")
+              }
+              else if(cont.indexOf("0") === 0) {
+                cont = cont.replace("0","tel:+231")
+              }
+              else if(cont.indexOf("8") === 0) {
+                cont = cont.replace("8","tel:+2318")
+              }
+              else if(cont.indexOf("7") === 0) {
+                cont = cont.replace("7","tel:+2317")
+              }
+              else {
+                winston.error("Unkown format of phone "+ cont)
+              }
+            }
+            if(cont.length!=17) {
+              fs.appendFile('wrongphone.csv', cont+ "," + c.fields.globalid + "\n", (err) => {
+                if (err) throw err;
+                return ""
+              })
+            }
+            else
+            return cont
+          })
+          if(modifiedCont.length === 1) {
+            if(modifiedCont[0] == "" || modifiedCont[0] == null || modifiedCont[0] == undefined) {
+              c.urns.splice(index,1)
+            }
+            else {
+              c.urns[index] = modifiedCont[0]
+              unique(c.urns);
+            }
+            resolve()
+          }
+          else {
+            async.eachOfSeries(modifiedCont,(mod,index1,nextMod)=>{
+              if(mod == "" || mod == null || mod == undefined) {
+                if(index1 == 0)
+                c.urns.splice(index,1)
+                else {
+                  var total = c.urns.length
+                  c.urns.splice(total,1)
+                }
+                return nextMod()
+              }
+              if(index1 == 0)
+              c.urns[index] = mod
+              else {
+                var total = c.urns.length
+                c.urns[total] = mod
+              }
+              return nextMod()
+            },function(){
+              unique(c.urns);
+              resolve()
+            })
+          }
+        }))
+        })
+        return c
+      })
+      Promise.all(promises).then(() => {
+        callback(contacts)
+      })
+    }
+
     winston.info(`Fetching all providers from ${config.openinfoman.queryDocument}...`)
     openinfoman.fetchAllEntities(config.sync.last_sync,config.sync.reset,(err, csdDoc, orchs) => {
       if (orchs) {
@@ -256,19 +343,27 @@ function setupApp () {
       }).then((groupUUID) => {
         let errCount = 0
         winston.info("Editing phone numbers")
-        winston.info("Done editing phone numbers")
-        winston.info("Getting Rapidpro Contacts")
-        rapidpro.getCurrent((rp_contacts)=>{
-          winston.info("Done getting Rapidpro Contacts")
-          winston.info("Generating Contacts based on iHRIS and Rapidpro")
-          generate_contacts(contacts,rp_contacts,groupUUID,(contacts)=>{
-            winston.info("Done Generating Contacts based on iHRIS and Rapidpro")
-            winston.info(`Adding/Updating ${contacts.length} contacts to in RapidPro...`)
-            const promises = []
-            contacts.forEach((contact) => {
+        edit_phone(contacts,(contacts)=>{
+          winston.info("Done editing phone numbers")
+          winston.info("Getting Rapidpro Contacts")
+          rapidpro.getContacts(false,false,false,(rp_contacts)=>{
+            winston.info("Done getting Rapidpro Contacts")
+            winston.info("Generating Contacts based on iHRIS and Rapidpro")
+            generate_contacts(contacts,rp_contacts,groupUUID,(contacts)=>{
+              winston.info("Done Generating Contacts based on iHRIS and Rapidpro")
+              winston.info(`Adding/Updating ${contacts.length} contacts to in RapidPro...`)
+              /*Rapidpro is limited to 2500 requests per hour,this means 1 req/1.44seconds for every 2500 requests
+                Lets calculate the number of miliseconds to wait before processing the next contact
+              **/
+              var total_contacts = contacts.length
+              var wait_time = total_contacts*1440/2500
+              const promises = []
+              var counter = 0
+              contacts.forEach((contact) => {
                 promises.push(new Promise((resolve, reject) => {
-                  setTimeout(function(){
                   rapidpro.addContact(contact, (err, contact, orchs) => {
+                    counter++
+                    winston.info("Processed " + counter + "/" + total_contacts + " Contacts")
                     if (orchs) {
                       orchestrations = orchestrations.concat(orchs)
                     }
@@ -279,54 +374,54 @@ function setupApp () {
                     }
                     resolve()
                   })
-                  },1500)
                 }))
-            })
-            Promise.all(promises).then(() => {
-              winston.info(`Done adding/updating ${contacts.length} contacts to RapidPro, there were ${errCount} errors.`)
-              var now = moment().format("YYYY-MM-DDTHH:mm:ss")
-              config.sync.last_sync = now
-              config.sync.reset = false
-              winston.info("Updating Last Sync")
-              openhim.updateConfig(mediatorConfig.urn,config,(res)=>{
-                winston.info("Done Updating Last Sync")
               })
-              winston.info('Fetching RapidPro contacts and converting them to CSD entities...')
-              adapter.getRapidProContactsAsCSDEntities(groupUUID, (err, contacts, orchs) => {
-                if (orchs) {
-                  orchestrations = orchestrations.concat(orchs)
-                }
-                if (err) {
-                  return reportFailure(err, req)
-                }
-                winston.info(`Done fetching and converting ${contacts.length} contacts.`)
-
-                winston.info('Loading provider directory with contacts...')
-                openinfoman.loadProviderDirectory(contacts, (err, orchs) => {
+              Promise.all(promises).then(() => {
+                winston.info(`Done adding/updating ${contacts.length} contacts to RapidPro, there were ${errCount} errors.`)
+                var now = moment().format("YYYY-MM-DDTHH:mm:ss")
+                config.sync.last_sync = now
+                config.sync.reset = false
+                winston.info("Updating Last Sync")
+                openhim.updateConfig(mediatorConfig.urn,config,(res)=>{
+                  winston.info("Done Updating Last Sync")
+                })
+                winston.info('Fetching RapidPro contacts and converting them to CSD entities...')
+                adapter.getRapidProContactsAsCSDEntities(groupUUID, (err, contacts, orchs) => {
                   if (orchs) {
                     orchestrations = orchestrations.concat(orchs)
                   }
                   if (err) {
                     return reportFailure(err, req)
                   }
-                  winston.info('Done loading provider directory.')
+                  winston.info(`Done fetching and converting ${contacts.length} contacts.`)
 
-                  res.writeHead(200, { 'Content-Type': 'application/json+openhim' })
-                  res.end(JSON.stringify({
-                    'x-mediator-urn': mediatorConfig.urn,
-                    status: 'Successful',
-                    request: {
-                      method: req.method,
-                      headers: req.headers,
-                      timestamp: req.timestamp,
-                      path: req.path
-                    },
-                    response: {
-                      status: 200,
-                      timestamp: new Date()
-                    },
-                    orchestrations: orchestrations
-                  }))
+                  winston.info('Loading provider directory with contacts...')
+                  openinfoman.loadProviderDirectory(contacts, (err, orchs) => {
+                    if (orchs) {
+                      orchestrations = orchestrations.concat(orchs)
+                    }
+                    if (err) {
+                      return reportFailure(err, req)
+                    }
+                    winston.info('Done loading provider directory.')
+
+                    res.writeHead(200, { 'Content-Type': 'application/json+openhim' })
+                    res.end(JSON.stringify({
+                      'x-mediator-urn': mediatorConfig.urn,
+                      status: 'Successful',
+                      request: {
+                        method: req.method,
+                        headers: req.headers,
+                        timestamp: req.timestamp,
+                        path: req.path
+                      },
+                      response: {
+                        status: 200,
+                        timestamp: new Date()
+                      },
+                      orchestrations: orchestrations
+                    }))
+                  })
                 })
               })
             })

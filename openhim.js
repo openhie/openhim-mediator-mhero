@@ -40,6 +40,20 @@ module.exports = (ohmOpts) => {
           callback()
         })
       })
+    },
+    updateConfig: (urn, config_update, callback) => {
+      utils.authenticate(ohmOpts, () => {
+        const options = {
+          url: `${ohmOpts.apiURL}/mediators/${urn}/config`,
+          headers: utils.genAuthHeaders(ohmOpts),
+          body: config_update,
+          json: true
+        }
+        request.put(options, (err, res,body) => {
+          if (err) { return callback(err) }
+          callback()
+        })
+      })
     }
   }
 }
