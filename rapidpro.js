@@ -5,6 +5,7 @@ const utils = require('./utils')
 const winston = require('winston')
 const async = require('async')
 const fs = require('fs');
+const sleep = require('sleep');
 
 module.exports = function (config) {
   const contactsURL = function (groupUUID) {
@@ -66,14 +67,18 @@ module.exports = function (config) {
   }
 
   function isThrottled (results,callback) {
+    if(results == undefined || results == null || results == "") {
+      winston.error("An error has occured while checking throttling,empty rapidpro results were submitted")
+      return callback(true)
+    }
     if(results.hasOwnProperty("detail")) {
       var detail = results.detail.toLowerCase()
       if(detail.indexOf("throttled") != -1) {
         var detArr = detail.split(" ")
         async.eachSeries(detArr,(det,nxtDet)=>{
           if(!isNaN(det)) {
-            //add 30 more seconds on top of the wait time expected by rapidpro then convert to miliseconds
-            var wait_time = (parseInt(det) + 30)*1000
+            //add 5 more seconds on top of the wait time expected by rapidpro then convert to miliseconds
+            var wait_time = (parseInt(det) *1000) + 5
             winston.warn("Rapidpro has throttled my requests,i will wait for " + wait_time/1000 + " Seconds Before i proceed,please dont interrupt me")
             setTimeout(function() {
               return callback(true)
@@ -109,6 +114,10 @@ module.exports = function (config) {
           }
         }
         request(options, (err, res, body) => {
+          if (err) {
+            winston.error(err)
+            return callback(err)
+          }
           isThrottled(JSON.parse(body),(wasThrottled)=>{
             if(wasThrottled) {
               //reprocess this contact
@@ -128,8 +137,7 @@ module.exports = function (config) {
             }
             else {
               if (err) {
-                callback(err)
-                return
+                return callback(err)
               }
               body = JSON.parse(body)
               if(!body.hasOwnProperty("results")) {
@@ -198,6 +206,10 @@ module.exports = function (config) {
       json: true
     }
     request.post(options, (err, res, newContact) => {
+      if (err) {
+        winston.error(err)
+        return callback(err)
+      }
       isThrottled(newContact,(wasThrottled)=>{
         if(wasThrottled) {
           //reprocess this contact
@@ -207,17 +219,11 @@ module.exports = function (config) {
         }
         else {
           if(!newContact.hasOwnProperty("uuid")) {
-            winston.error("An error occured while adding contact " + JSON.stringify(contact) + JSON.stringify(contact))
+            winston.error("An error occured while adding contact " + JSON.stringify(contact) + JSON.stringify(newContact))
             fs.appendFile('unprocessed.csv', JSON.stringify(contact) + "," + JSON.stringify(newContact) + "\n", (err) => {
               if (err) throw err;
               return ""
             })
-          }
-          else
-          winston.info(newContact)
-          if (err) {
-            callback(err)
-            return
           }
 
           let orchestrations = []
@@ -229,7 +235,7 @@ module.exports = function (config) {
               callback(null, newContact, orchestrations)
             } else {
         //winston.error('No uuid set in contact, it probably didn\'t get saved in RapidPro')
-        callback(null, newContact, orchestrations)
+            callback(null, newContact, orchestrations)
             }
           } else {
             callback(new Error('No body returned, the contact probably didn\'t get saved in RapidPro'), null, orchestrations)

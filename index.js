@@ -145,6 +145,7 @@ function setupApp () {
             record.groups = []
             record.groups.push(groupUUID)
           }
+          if(record.hasOwnProperty("groups"))
           unique(record.groups)
           return callback(record)
         })
@@ -210,7 +211,9 @@ function setupApp () {
       //ensure all contacts starts with country code
       const promises = []
       contacts = contacts.map((c) => {
-        c.urns.forEach((originalCont,index)=>{
+        for(var i=c.urns.length-1;i>=0;i--){
+          var index = i
+          var originalCont = c.urns[index]
           promises.push(new Promise((resolve, reject) => {
           //some contacts are grouped together using / i.e phone1/phone2
           var modifiedCont = originalCont.split("/").map((cont)=>{
@@ -285,7 +288,7 @@ function setupApp () {
             })
           }
         }))
-        })
+        }
         return c
       })
       Promise.all(promises).then(() => {
@@ -357,26 +360,21 @@ function setupApp () {
               **/
               var total_contacts = contacts.length
               var wait_time = total_contacts*1440/2500
-              const promises = []
               var counter = 0
-              contacts.forEach((contact) => {
-                promises.push(new Promise((resolve, reject) => {
-                  rapidpro.addContact(contact, (err, contact, orchs) => {
-                    counter++
-                    winston.info("Processed " + counter + "/" + total_contacts + " Contacts")
-                    if (orchs) {
-                      orchestrations = orchestrations.concat(orchs)
-                    }
-                    if (err) {
-                      winston.error(err)
-                      errCount++
-                      reject()
-                    }
-                    resolve()
-                  })
-                }))
-              })
-              Promise.all(promises).then(() => {
+              async.eachSeries(contacts,(contact,nextContact)=>{
+                rapidpro.addContact(contact, (err, contact, orchs) => {
+                  counter++
+                  winston.info("Processed " + counter + "/" + total_contacts + " Contacts")
+                  if (orchs) {
+                    orchestrations = orchestrations.concat(orchs)
+                  }
+                  if (err) {
+                    winston.error(err)
+                    errCount++
+                  }
+                  return nextContact()
+                })
+              },function(){
                 winston.info(`Done adding/updating ${contacts.length} contacts to RapidPro, there were ${errCount} errors.`)
                 var now = moment().format("YYYY-MM-DDTHH:mm:ss")
                 config.sync.last_sync = now
