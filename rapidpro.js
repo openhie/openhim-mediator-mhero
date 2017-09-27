@@ -5,7 +5,6 @@ const utils = require('./utils')
 const winston = require('winston')
 const async = require('async')
 const fs = require('fs');
-const sleep = require('sleep');
 
 module.exports = function (config) {
   const contactsURL = function (groupUUID) {
