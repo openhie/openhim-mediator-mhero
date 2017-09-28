@@ -28,7 +28,7 @@
   "homepage": "https://github.com/jembi/openhim-mediator-mhero#readme",
   "dependencies": {
     "array-unique": "^0.3.2",
-    "async": "^2.5.0",
+    "async": "1.5.2",
     "express": "^4.13.4",
     "lodash": "^4.11.1",
     "moment": "^2.18.1",
@@ -37,7 +37,7 @@
     "underscore": "^1.8.3",
     "urijs": "^1.17.1",
     "winston": "^2.2.0",
-    "xmldom": "^0.1.22",
+    "xmldom": "0.1.22",
     "xpath": "0.0.23"
   },
   "devDependencies": {
