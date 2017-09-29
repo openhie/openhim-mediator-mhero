@@ -137,10 +137,10 @@ function setupApp () {
         }
         extract_groupuuids(groups,(grp_uuids)=>{
           if(grp_uuids.length>0) {
-            record.groups = []
-            record.groups = grp_uuids
+            record.group_uuids = []
+            record.group_uuids = grp_uuids
           }
-          if (groupUUID) {
+          if (groupUUID && !record.group_uuids.includes(groupUUID)) {
             if(!record.hasOwnProperty("groups"))
             record.groups = []
             record.groups.push(groupUUID)
