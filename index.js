@@ -170,6 +170,9 @@ function setupApp () {
         //if any of rapidpro cont has this globalid then merge with ihris contact
         if(rapidpro_contacts.hasOwnProperty(globalid)) {
           merge_contacts(rapidpro_contacts[globalid],oim_cont,groupUUID,(record)=>{
+            if(record.language == "") {
+              record.language = null
+            }
             records.push(record)
             return nextOIMCont()
           })
@@ -179,6 +182,9 @@ function setupApp () {
           search_rapidpro_by_urn(oim_cont,rapidpro_contacts,(matched_cont)=>{
             if(matched_cont.uuid != null && matched_cont.uuid != undefined && matched_cont.uuid != "") {
               merge_contacts(matched_cont,oim_cont,groupUUID,(record)=>{
+                if(record.language == "") {
+                  record.language = null
+                }
                 records.push(record)
                 return nextOIMCont()
               })
@@ -195,6 +201,9 @@ function setupApp () {
                   record.groups = []
                   record.groups.push(groupUUID)
                 }
+              }
+              if(record.language == "") {
+                record.language = null
               }
               records.push(record)
               return nextOIMCont()
@@ -358,7 +367,6 @@ function setupApp () {
               Lets calculate the number of miliseconds to wait before processing the next contact
             **/
             var total_contacts = contacts.length
-            var wait_time = total_contacts*1440/2500
             var counter = 0
             async.eachSeries(contacts,(contact,nextContact)=>{
               rapidpro.addContact(contact, (err, contact, orchs) => {
