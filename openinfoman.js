@@ -66,10 +66,14 @@ module.exports = function (cnf) {
       let emptyDirectoryURI = new URI(config.url)
         .segment('/CSD/emptyDirectory/')
         .segment(config.rapidProDocument)
-
+      var options = {
+        url: emptyDirectoryURI.toString(),
+        headers: {
+          Authorization: auth
+        }
+      }
       let before = new Date()
-
-      request.get(emptyDirectoryURI.toString(), (err, res, body) => {
+      request.get(options, (err, res, body) => {
         if (err) {
           return callback(err)
         }
